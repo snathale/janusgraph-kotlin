@@ -1,7 +1,7 @@
-.gradle
-/build
-.idea
-out
+/access-control/.gradle
+/access-control/build
+/access-control/.idea
+/access-control/out
 /project
 /data
 
