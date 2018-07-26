@@ -6,6 +6,9 @@ import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.output.TermUi
 import com.github.ajalt.clikt.parameters.options.*
 import com.github.ajalt.clikt.parameters.types.choice
+import com.github.ajalt.clikt.parameters.types.int
+import com.github.ajalt.clikt.parameters.types.long
+import data.EdgeData
 import data.PropertyKey
 import data.VertexData
 import importer.JanusGraphSchemaImporter
@@ -21,7 +24,7 @@ interface GraphCommand {
 }
 
 data class Vertex(override var label: String = "", override var property: MutableMap<String, String> = HashMap()): GraphCommand
-data class Edge(override var label: String = "", override var property: MutableMap<String, String> = HashMap(), var source: Int = 0, var target: Int = 0): GraphCommand
+data class Edge(override var label: String = "", override var property: MutableMap<String, String> = HashMap(), var source: Long = 0, var target: Long = 0): GraphCommand
 class Cli : CliktCommand() {
 
     val vertex: String by option(help = "Choose a vertexLabel")
@@ -29,12 +32,19 @@ class Cli : CliktCommand() {
             .default("organization")
     val edge: String? by option(help = "Choose a edgeLabel")
             .choice("has", "provide", "own", "add", "remove", "associated", "inherit")
+    val loadSchema: Boolean by option(help = "Choose if needs loading a Graph Schema")
+            .flag(default = false)
     override fun run() {
         val vertexOption = Vertex(vertex)
         context.obj = vertexOption
         if (edge != null) {
             val edgeOption = Edge(edge.toString())
             context.obj = edgeOption
+        }
+        if (loadSchema) {
+            val path = Paths.get("").toAbsolutePath().toString()
+            val janusGraph = JanusGraphFactory.open("$path/config/janusgraph-cql-es.properties")
+            JanusGraphSchemaImporter().writeGraphSONSchema(janusGraph, "$path/config/schema.json")
         }
     }
 }
@@ -61,12 +71,10 @@ class Add: CliktCommand () {
         }
         val path = Paths.get("").toAbsolutePath().toString()
         val janusGraph = JanusGraphFactory.open("$path/config/janusgraph-cql-es.properties")
-        JanusGraphSchemaImporter().writeGraphSONSchema(janusGraph, "$path/config/schema.json")
         if (graph is Edge && (source != null) && (target != null) ) {
             TermUi.echo("Adding edge $graph")
-            (graph as Edge).source = source!!.toInt()
-            (graph as Edge).target = target!!.toInt()
-            //call class to add Edge
+            Graph(janusGraph).addEdge(EdgeData(graph.label, source!!.toLong(), target!!.toLong()))
+            println("Add edge successfully")
         } else {
             TermUi.echo("Adding vertex $graph")
             val propertyList: ArrayList<PropertyKey> = arrayListOf()
@@ -77,13 +85,28 @@ class Add: CliktCommand () {
                     propertyList.add(newValue)
                 }
             }
-            val v = Graph(janusGraph, janusGraph.traversal()).addVertex(VertexData(vertexLabel, propertyList))
+            val v = Graph(janusGraph).addVertex(VertexData(vertexLabel, propertyList))
             println("Add vertex $v")
         }
         janusGraph.close()
     }
 }
 
+class ToList(): CliktCommand () {
+    val option: String by option(help = "Choose list Vertex or Edge")
+            .choice("vertex", "edge")
+            .default("vertex")
+    val limit: Long? by option(help = "Set a limit").long().default(10)
+    override fun run() {
+        val path = Paths.get("").toAbsolutePath().toString()
+        val janusGraph = JanusGraphFactory.open("$path/config/janusgraph-cql-es.properties")
+        if (option == "edge") {
+            println(Graph(janusGraph).listEdges(limit!!.toLong()))
+        }
+
+    }
+}
+
 fun main(args: Array<String>) = Cli()
-      .subcommands(Add())
+      .subcommands(Add()).subcommands(ToList())
       .main(args)
