@@ -1,4 +1,4 @@
-package demo.schema
+package importer
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.lang.Closure
@@ -7,6 +7,7 @@ import org.janusgraph.core.JanusGraph
 import org.janusgraph.core.JanusGraphTransaction
 import org.janusgraph.core.schema.JanusGraphManagement
 import org.janusgraph.graphdb.database.StandardJanusGraph
+import schema.GraphSchema
 import java.io.File
 
 

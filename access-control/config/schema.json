@@ -5,7 +5,7 @@
     {"name": "code", "dataType": "String", "cardinality": "SINGLE"},
     {"name": "observation", "dataType": "String", "cardinality": "SINGLE"},
     {"name": "enable", "dataType": "Boolean", "cardinality": "SINGLE"},
-    {"name": "criationDate", "dataType": "Date", "cardinality": "SINGLE"},
+    {"name": "creationDate", "dataType": "Date", "cardinality": "SINGLE"},
     {"name": "description", "dataType": "String", "cardinality": "SINGLE"},
     {"name": "expirationDate", "dataType": "Date", "cardinality": "SINGLE"}
   ],

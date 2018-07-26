@@ -6,9 +6,12 @@ import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.output.TermUi
 import com.github.ajalt.clikt.parameters.options.*
 import com.github.ajalt.clikt.parameters.types.choice
-import demo.schema.JanusGraphSchemaImporter
+import data.PropertyKey
+import data.VertexData
+import importer.JanusGraphSchemaImporter
 import org.janusgraph.core.JanusGraphFactory
-import org.janusgraph.core.PropertyKey
+import transversal.Graph
+import validator.VertexPropertyKey
 import java.nio.file.Paths
 import kotlin.system.exitProcess
 
@@ -43,7 +46,7 @@ class Add: CliktCommand () {
     val property: List<Pair<String, String>> by option(help = "Setting a property key/value pair.")
             .pair()
             .multiple()
-    val propertyLabels = arrayOf("name", "id", "code", "observation", "enable", "criationDate", "description", "expirationDate")
+    val propertyLabels = arrayOf("name", "id", "code", "observation", "enable", "creationDate", "description", "expirationDate")
     override fun run() {
         for ((k, v) in property) {
             if (!propertyLabels.contains(k)) {
@@ -57,8 +60,8 @@ class Add: CliktCommand () {
             exitProcess(1)
         }
         val path = Paths.get("").toAbsolutePath().toString()
-        val graphSchema = JanusGraphFactory.open("$path/config/janusgraph-cql-es.properties")
-        JanusGraphSchemaImporter().writeGraphSONSchema(graphSchema, "$path/config/schema.json")
+        val janusGraph = JanusGraphFactory.open("$path/config/janusgraph-cql-es.properties")
+        JanusGraphSchemaImporter().writeGraphSONSchema(janusGraph, "$path/config/schema.json")
         if (graph is Edge && (source != null) && (target != null) ) {
             TermUi.echo("Adding edge $graph")
             (graph as Edge).source = source!!.toInt()
@@ -66,9 +69,18 @@ class Add: CliktCommand () {
             //call class to add Edge
         } else {
             TermUi.echo("Adding vertex $graph")
-            //call class to add Vertex
+            val propertyList: ArrayList<PropertyKey> = arrayListOf()
+            val vertexLabel = (graph as Vertex).label
+            for (item in property) {
+                val newValue = PropertyKey(item.first, item.second)
+                if (VertexPropertyKey.isPropertyIsCorrect(vertexLabel, newValue)) {
+                    propertyList.add(newValue)
+                }
+            }
+            val v = Graph(janusGraph, janusGraph.traversal()).addVertex(VertexData(vertexLabel, propertyList))
+            println("Add vertex $v")
         }
-        graphSchema.close()
+        janusGraph.close()
     }
 }
 

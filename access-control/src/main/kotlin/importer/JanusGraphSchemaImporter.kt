@@ -1,4 +1,4 @@
-package demo.schema
+package importer
 
 import org.janusgraph.core.JanusGraph
 import org.janusgraph.core.schema.JanusGraphManagement
