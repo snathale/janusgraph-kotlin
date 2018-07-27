@@ -10,7 +10,24 @@ import org.apache.tinkerpop.gremlin.structure.Vertex
 
 
 class Graph(var graph: JanusGraph): IGraph {
-    override fun updateProperty(id: Long, property: PropertyKey) {
+    override fun updateProperty(id: Long, property: PropertyKey, isVertex: Boolean): Boolean {
+        try {
+            val g = graph.traversal()
+            if (!isVertex) {
+                g.E(id).has(property.name).property(property.name, property.value).next()
+                graph.tx().commit()
+                println("Update property ${property.name} with value ${property.value} in Edge id $id")
+                return true
+            }
+            g.V(id).property(property.name, property.value).next()
+            graph.tx().commit()
+            println("Update property ${property.name} with value ${property.value} in Vertex id $id")
+            return true
+        } catch (e: Exception) {
+            graph.tx().rollback()
+            println ("Impossible update property vertex ${e.message}")
+            exitProcess(1)
+        }
     }
 
     override fun addVertex(vertex: VertexData): Long {
@@ -43,25 +60,48 @@ class Graph(var graph: JanusGraph): IGraph {
         }
     }
 
-    override fun listVertex(limit: Long): MutableList<Vertex> {
+    override fun listVertex(limit: Long)  {
         return try {
             val g = graph.traversal()
-            g.V().limit(limit).toList()
+            val list = g.V().limit(limit).toList()
+            for (item in list) {
+                val property = g.V(item.id()).valueMap<Vertex>()
+                for (content in property) {
+                    println("Vertex id: ${item.id()}}, properties: ${content}")
+                }
+            }
         } catch (e: Exception) {
             println("Impossible list all Vertex ${e.message}")
-            mutableListOf()
         }
     }
 
-    override fun listEdges(limit: Long): MutableList<String> {
+    override fun listEdges(limit: Long) {
         return try {
             val g = graph.traversal()
             val nodes = g.V().limit(limit).toList()
-            g.V(nodes).aggregate("node").outE().`as`("edge").inV().where(within("node"))
-                    .select<String>("edge").toList()
+            println("Egdes: [id][target->property->source]")
+            println (g.V(nodes).aggregate("node").outE().`as`("edge").inV().where(within("node"))
+                    .select<String>("edge"))
+
         } catch (e: Exception) {
             println("Impossible list all Edge ${e.message}")
-            mutableListOf()
+        }
+    }
+
+    override fun verifyUserHasPermission(userCode: String, permission: String): Boolean {
+        try {
+            val g = graph.traversal()
+            val user = g.V().has("code", userCode).outE("associated")
+            if (user != user){
+                if (user.outE("own").outE("add").property("name", permission) != null)
+                    println("User have this access rule")
+                    return true
+            }
+            println("User $userCode don't have access rule associated")
+            return false
+        } catch (e: Exception) {
+            println("Impossible find permission ${e.message}")
+            return false
         }
     }
 }

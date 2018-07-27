@@ -6,7 +6,6 @@ import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.output.TermUi
 import com.github.ajalt.clikt.parameters.options.*
 import com.github.ajalt.clikt.parameters.types.choice
-import com.github.ajalt.clikt.parameters.types.int
 import com.github.ajalt.clikt.parameters.types.long
 import data.EdgeData
 import data.PropertyKey
@@ -25,7 +24,7 @@ interface GraphCommand {
 
 data class Vertex(override var label: String = "", override var property: MutableMap<String, String> = HashMap()): GraphCommand
 data class Edge(override var label: String = "", override var property: MutableMap<String, String> = HashMap(), var source: Long = 0, var target: Long = 0): GraphCommand
-class Cli : CliktCommand() {
+class Test : CliktCommand() {
 
     val vertex: String by option(help = "Choose a vertexLabel")
             .choice("organization", "unitOrganization", "group", "user", "accessGroup", "rule", "accessRule")
@@ -45,6 +44,7 @@ class Cli : CliktCommand() {
             val path = Paths.get("").toAbsolutePath().toString()
             val janusGraph = JanusGraphFactory.open("$path/config/janusgraph-cql-es.properties")
             JanusGraphSchemaImporter().writeGraphSONSchema(janusGraph, "$path/config/schema.json")
+            janusGraph.close()
         }
     }
 }
@@ -101,12 +101,37 @@ class ToList(): CliktCommand () {
         val path = Paths.get("").toAbsolutePath().toString()
         val janusGraph = JanusGraphFactory.open("$path/config/janusgraph-cql-es.properties")
         if (option == "edge") {
-            println(Graph(janusGraph).listEdges(limit!!.toLong()))
+            Graph(janusGraph).listEdges(limit!!.toLong())
+        }else {
+            Graph(janusGraph).listVertex(limit!!.toLong())
         }
+        janusGraph.close()
 
     }
 }
 
-fun main(args: Array<String>) = Cli()
-      .subcommands(Add()).subcommands(ToList())
+class UpdateProperty(): CliktCommand() {
+    val isVertexProperty: Boolean? by option(help = "Choose if property is to Vertex or Edge")
+            .flag(default = true)
+    val id: Long by option(help = "Set a id").long().default(0)
+    val property: Pair<String, String> by option(help = "Setting a property key/value pair.")
+            .pair().default("" to "")
+    val propertyLabels = arrayOf("name", "id", "code", "observation", "enable", "creationDate", "description", "expirationDate")
+    override fun run() {
+        if (!propertyLabels.contains(property.first)) {
+            TermUi.echo("Aborted! This property not is allowed for this graph", err = true)
+            exitProcess(1)
+        }
+        val path = Paths.get("").toAbsolutePath().toString()
+        val janusGraph = JanusGraphFactory.open("$path/config/janusgraph-cql-es.properties")
+        val propertyUpdate = PropertyKey(property.first, property.second)
+        Graph(janusGraph).updateProperty(id,propertyUpdate, isVertexProperty!!)
+        janusGraph.close()
+    }
+}
+
+
+fun main(args: Array<String>) = Test()
+      .subcommands(Add()).subcommands(ToList()).subcommands(UpdateProperty())
       .main(args)
+
