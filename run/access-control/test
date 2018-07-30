@@ -1,0 +1,7 @@
+Usage: add [OPTIONS]
+
+Options:
+  --source TEXT       Setting a vertex source
+  --target TEXT       Setting a vertex target
+  --property TEXT...  Setting a property key/value pair.
+  -h, --help          Show this message and exit

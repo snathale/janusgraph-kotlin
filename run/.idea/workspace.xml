@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="a1b70fcb-5c46-4e6c-a51a-f3a841725bdd" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/../access-control/config/janusgraph-cql-es.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../access-control/config/janusgraph-cql-es.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../access-control/config/schema.json" beforeDir="false" afterPath="$PROJECT_DIR$/../access-control/config/schema.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../access-control/src/main/kotlin/cli/Cli.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../access-control/src/main/kotlin/cli/Cli.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../access-control/src/main/kotlin/importer/JanusGraphJSONSchema.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../access-control/src/main/kotlin/importer/JanusGraphJSONSchema.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../access-control/src/main/kotlin/importer/JanusGraphSchemaImporter.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../access-control/src/main/kotlin/importer/JanusGraphSchemaImporter.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../access-control/src/main/kotlin/schema/EdgeLabelBean.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../access-control/src/main/kotlin/schema/EdgeLabelBean.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../access-control/src/main/kotlin/schema/IndexBean.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../access-control/src/main/kotlin/schema/IndexBean.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../access-control/src/main/kotlin/schema/PropertyKeyBean.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../access-control/src/main/kotlin/schema/PropertyKeyBean.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../access-control/src/main/kotlin/schema/TypeMap.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../access-control/src/main/kotlin/schema/TypeMap.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../access-control/src/main/kotlin/schema/VertexCentricIndexBean.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../access-control/src/main/kotlin/schema/VertexCentricIndexBean.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../access-control/src/main/kotlin/schema/VertexLabelBean.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../access-control/src/main/kotlin/schema/VertexLabelBean.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../access-control/src/main/kotlin/transversal/Graph.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../access-control/src/main/kotlin/traversal/Graph.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../access-control/src/main/kotlin/transversal/IGraph.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../access-control/src/main/kotlin/traversal/IGraph.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../access-control/src/main/kotlin/validator/VertexPropertyKey.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../access-control/src/main/kotlin/validator/VertexPropertyKey.kt" afterDir="false" />
+    </list>
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FUSProjectUsageTrigger">
+    <session id="-6263303">
+      <usages-collector id="statistics.lifecycle.project">
+        <counts>
+          <entry key="project.closed" value="1" />
+          <entry key="project.open.time.17" value="1" />
+          <entry key="project.open.time.9" value="1" />
+          <entry key="project.opened" value="2" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.extensions.open">
+        <counts>
+          <entry key="access-control" value="1" />
+          <entry key="json" value="1" />
+          <entry key="sh" value="1" />
+          <entry key="txt" value="2" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.types.open">
+        <counts>
+          <entry key="JSON" value="1" />
+          <entry key="PLAIN_TEXT" value="4" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.extensions.edit">
+        <counts>
+          <entry key="json" value="22" />
+          <entry key="sh" value="1132" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.types.edit">
+        <counts>
+          <entry key="Bash" value="1132" />
+          <entry key="JSON" value="22" />
+        </counts>
+      </usages-collector>
+    </session>
+  </component>
+  <component name="FileEditorManager">
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/access-control/bin/run.sh">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="1290">
+              <caret line="86" column="39" selection-start-line="86" selection-start-column="39" selection-end-line="86" selection-end-column="39" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/access-control/bin/config/schema.json">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="390">
+              <caret line="26" column="48" lean-forward="true" selection-start-line="26" selection-start-column="48" selection-end-line="26" selection-end-column="48" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/access-control/bin/access-control">
+          <provider selected="true" editor-type-id="text-editor">
+            <state>
+              <caret column="17" selection-start-column="17" selection-end-column="17" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
+  </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>[CLI]</find>
+      <find>user</find>
+      <find>accessRule</find>
+    </findStrings>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="GradleLocalSettings">
+    <option name="projectSyncType">
+      <map>
+        <entry key="$USER_HOME$/kotlin" value="PREVIEW" />
+        <entry key="$PROJECT_DIR$/../../access-control" value="PREVIEW" />
+        <entry key="$PROJECT_DIR$/../../mixed-java-kotlin-hello-world" value="PREVIEW" />
+      </map>
+    </option>
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/access-control/bin/out.txt" />
+        <option value="$PROJECT_DIR$/access-control/bin/config/schema.json" />
+        <option value="$PROJECT_DIR$/access-control/bin/run.sh" />
+      </list>
+    </option>
+  </component>
+  <component name="JsBuildToolGruntFileManager" detection-done="true" sorting="DEFINITION_ORDER" />
+  <component name="JsBuildToolPackageJson" detection-done="true" sorting="DEFINITION_ORDER" />
+  <component name="JsGulpfileManager">
+    <detection-done>true</detection-done>
+    <sorting>DEFINITION_ORDER</sorting>
+  </component>
+  <component name="ProjectFrameBounds" extendedState="6">
+    <option name="x" value="65" />
+    <option name="y" value="-4" />
+    <option name="width" value="1855" />
+    <option name="height" value="1084" />
+  </component>
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectView">
+    <navigator proportions="" version="1">
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="PackagesPane" />
+      <pane id="ProjectPane">
+        <subPane>
+          <expand>
+            <path>
+              <item name="run" type="b2602c69:ProjectViewProjectNode" />
+              <item name="run" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="run" type="b2602c69:ProjectViewProjectNode" />
+              <item name="run" type="462c0819:PsiDirectoryNode" />
+              <item name="access-control" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="run" type="b2602c69:ProjectViewProjectNode" />
+              <item name="run" type="462c0819:PsiDirectoryNode" />
+              <item name="access-control" type="462c0819:PsiDirectoryNode" />
+              <item name="bin" type="462c0819:PsiDirectoryNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
+      <pane id="AndroidView" />
+      <pane id="Scope" />
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="aspect.path.notification.shown" value="true" />
+    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1532981826262" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
+    <property name="nodejs_npm_path_reset_for_default_project" value="true" />
+    <property name="settings.editor.selected.configurable" value="reference.settingsdialog.project.gradle" />
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="RunManager">
+    <configuration default="true" type="Application" factoryName="Application">
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="JUnit" factoryName="JUnit">
+      <option name="WORKING_DIRECTORY" value="%MODULE_WORKING_DIR%" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="TestNG" factoryName="TestNG">
+      <option name="WORKING_DIRECTORY" value="%MODULE_WORKING_DIR%" />
+      <properties />
+      <listeners />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="a1b70fcb-5c46-4e6c-a51a-f3a841725bdd" name="Default Changelist" comment="" />
+      <created>1532958633463</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1532958633463</updated>
+      <workItem from="1532958635863" duration="168000" />
+      <workItem from="1532959065459" duration="16922000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TimeTrackingManager">
+    <option name="totallyTimeSpent" value="17090000" />
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="65" y="-4" width="1855" height="1084" extended-state="6" />
+    <layout>
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.25262576" />
+      <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
+      <window_info id="Image Layers" order="2" />
+      <window_info id="Designer" order="3" />
+      <window_info id="UI Designer" order="4" />
+      <window_info id="Capture Tool" order="5" />
+      <window_info id="Favorites" order="6" side_tool="true" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Find" order="1" visible="true" weight="0.3294979" />
+      <window_info anchor="bottom" id="Run" order="2" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="bottom" id="TODO" order="6" />
+      <window_info anchor="bottom" id="Database Changes" order="7" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Terminal" order="8" weight="0.3294979" />
+      <window_info anchor="bottom" id="Event Log" order="9" side_tool="true" />
+      <window_info anchor="bottom" id="Version Control" order="10" />
+      <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+      <window_info anchor="right" id="Palette" order="3" />
+      <window_info anchor="right" id="Capture Analysis" order="4" />
+      <window_info anchor="right" id="Theme Preview" order="5" />
+      <window_info anchor="right" id="Palette&#9;" order="6" />
+      <window_info anchor="right" id="Database" order="7" />
+      <window_info anchor="right" id="Maven Projects" order="8" />
+    </layout>
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="VcsContentAnnotationSettings">
+    <option name="myLimit" value="2678400000" />
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/access-control/bin/out.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret column="10" selection-end-line="616" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/access-control/bin/access-control">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret column="17" selection-start-column="17" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/access-control/bin/commands.txt">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/access-control/bin/config/schema.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="390">
+          <caret line="26" column="48" lean-forward="true" selection-start-line="26" selection-start-column="48" selection-end-line="26" selection-end-column="48" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/access-control/bin/run.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1290">
+          <caret line="86" column="39" selection-start-line="86" selection-start-column="39" selection-end-line="86" selection-end-column="39" />
+        </state>
+      </provider>
+    </entry>
+  </component>
+</project>

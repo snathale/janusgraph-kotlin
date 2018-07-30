@@ -35,7 +35,7 @@ abstract class VertexPropertyKey {
                     return true
                 }
             }
-            println("Impossible add the property $propertyKey to label $label")
+            println("[SCHEMA] Impossible add the property $propertyKey to label $label")
             exitProcess(1)
         }
     }

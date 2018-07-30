@@ -16,7 +16,7 @@ class JanusGraphSchemaImporter {
         val mgmt: JanusGraphManagement = graph.openManagement()
         val index = mgmt.getGraphIndex(name)
         if (index == null) {
-            print ("${name} index doesn't exist")
+            print ("[SCHEMA] ${name} index doesn't exist")
             return
         }
         mgmt.updateIndex(index, newState)

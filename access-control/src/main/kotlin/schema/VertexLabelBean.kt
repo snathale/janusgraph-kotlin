@@ -10,18 +10,18 @@ class VertexLabelBean {
 
     fun make(mgmt: JanusGraphManagement) {
         if (name == null) {
-            println("need \"name\" property to define a vertex")
+            println("[SCHEMA] Need \"name\" property to define a vertex")
         } else if (mgmt.containsVertexLabel(name)) {
-            println("vertex: ${name} exists")
+            println("[SCHEMA] Vertex: ${name} exists")
         } else {
             try {
                 val maker: VertexLabelMaker = mgmt.makeVertexLabel(name)
                 if (partition) maker.partition()
                 if (useStatic) maker.setStatic()
                 maker.make()
-                println ("vertex:${name} creation is done")
+                println ("[SCHEMA] Vertex:${name} creation is done")
             } catch (e: Exception) {
-                println("can't create vertex: ${name}, ${e.message}")
+                println("[SCHEMA] Can't create vertex: ${name}, ${e.message}")
             }
         }
     }

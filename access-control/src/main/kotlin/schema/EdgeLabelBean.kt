@@ -13,9 +13,9 @@ class EdgeLabelBean {
 
     fun make(mgmt: JanusGraphManagement) {
         if (name == null) {
-            println ("need \"name\" property to define a label")
+            println ("[SCHEMA] Need \"name\" property to define a label")
         } else if (mgmt.containsEdgeLabel(this.name)) {
-            println("edge: ${name} exists")
+            println("[SCHEMA] Edge: ${name} exists")
         } else {
             try {
                 val maker: EdgeLabelMaker = mgmt.makeEdgeLabel(name).multiplicity(Multiplicity.valueOf(this.multiplicity))
@@ -29,9 +29,9 @@ class EdgeLabelBean {
                     maker.unidirected()
                 }
                 maker.make()
-                println("edge: ${name} creation is done")
+                println("[SCHEMA] Edge: ${name} creation is done")
             } catch (e: Exception) {
-                println("cant't create edge: ${name}, ${e.message}")
+                println("[SCHEMA] Cant't create edge: ${name}, ${e.message}")
             }
         }
     }

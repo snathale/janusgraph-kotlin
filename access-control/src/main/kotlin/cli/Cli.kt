@@ -12,7 +12,7 @@ import data.PropertyKey
 import data.VertexData
 import importer.JanusGraphSchemaImporter
 import org.janusgraph.core.JanusGraphFactory
-import transversal.Graph
+import traversal.Graph
 import validator.VertexPropertyKey
 import java.nio.file.Paths
 import kotlin.system.exitProcess
@@ -31,8 +31,6 @@ class Test : CliktCommand() {
             .default("organization")
     val edge: String? by option(help = "Choose a edgeLabel")
             .choice("has", "provide", "own", "add", "remove", "associated", "inherit")
-    val loadSchema: Boolean by option(help = "Choose if needs loading a Graph Schema")
-            .flag(default = false)
     override fun run() {
         val vertexOption = Vertex(vertex)
         context.obj = vertexOption
@@ -40,6 +38,14 @@ class Test : CliktCommand() {
             val edgeOption = Edge(edge.toString())
             context.obj = edgeOption
         }
+
+    }
+}
+
+class LoadSchema: CliktCommand () {
+    val loadSchema: Boolean by option("--on", help = "Choose if needs loading a Graph Schema")
+            .flag("--off", "-O", default = false)
+    override fun run() {
         if (loadSchema) {
             val path = Paths.get("").toAbsolutePath().toString()
             val janusGraph = JanusGraphFactory.open("$path/config/janusgraph-cql-es.properties")
@@ -60,23 +66,25 @@ class Add: CliktCommand () {
     override fun run() {
         for ((k, v) in property) {
             if (!propertyLabels.contains(k)) {
-                TermUi.echo("Aborted! This property not is allowed for this graph", err = true)
+                TermUi.echo("[CLI] Aborted! This property not is allowed for this graph", err = true)
                 exitProcess(1)
             }
             graph.property[k] = v
         }
         if (graph is Edge && (source == null || target == null)) {
-            TermUi.echo("Aborted! Edge needs a source and a target", err = true)
+            TermUi.echo("[CLI] Aborted! Edge needs a source and a target", err = true)
             exitProcess(1)
         }
         val path = Paths.get("").toAbsolutePath().toString()
         val janusGraph = JanusGraphFactory.open("$path/config/janusgraph-cql-es.properties")
         if (graph is Edge && (source != null) && (target != null) ) {
-            TermUi.echo("Adding edge $graph")
+            (graph as Edge).source = source!!.toLong()
+            (graph as Edge).target = target!!.toLong()
+            TermUi.echo("[CLI] Adding edge")
             Graph(janusGraph).addEdge(EdgeData(graph.label, source!!.toLong(), target!!.toLong()))
-            println("Add edge successfully")
+            println("[CLI] Add edge successfully")
         } else {
-            TermUi.echo("Adding vertex $graph")
+            TermUi.echo("[CLI] Adding vertex $graph")
             val propertyList: ArrayList<PropertyKey> = arrayListOf()
             val vertexLabel = (graph as Vertex).label
             for (item in property) {
@@ -86,7 +94,8 @@ class Add: CliktCommand () {
                 }
             }
             val v = Graph(janusGraph).addVertex(VertexData(vertexLabel, propertyList))
-            println("Add vertex $v")
+            println("[CLI] Add vertex $v")
+            println("[CLI-ADD] $v")
         }
         janusGraph.close()
     }
@@ -119,7 +128,7 @@ class UpdateProperty(): CliktCommand() {
     val propertyLabels = arrayOf("name", "id", "code", "observation", "enable", "creationDate", "description", "expirationDate")
     override fun run() {
         if (!propertyLabels.contains(property.first)) {
-            TermUi.echo("Aborted! This property not is allowed for this graph", err = true)
+            TermUi.echo("[CLI] Aborted! This property not is allowed for this graph", err = true)
             exitProcess(1)
         }
         val path = Paths.get("").toAbsolutePath().toString()
@@ -132,6 +141,6 @@ class UpdateProperty(): CliktCommand() {
 
 
 fun main(args: Array<String>) = Test()
-      .subcommands(Add()).subcommands(ToList()).subcommands(UpdateProperty())
+      .subcommands(Add()).subcommands(ToList()).subcommands(UpdateProperty()).subcommands(LoadSchema())
       .main(args)
 

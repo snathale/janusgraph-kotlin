@@ -16,17 +16,17 @@ class IndexBean {
 
     fun make(mgmt: JanusGraphManagement, isVertexIndex: Boolean) {
         if (name == null) {
-            println ("missing the 'name' property, not able to create an index")
+            println ("[SCHEMA] Missing the 'name' property, not able to create an index")
             return
         }
 
         if (mgmt.containsGraphIndex(name)) {
-            println ("index: ${name} exists")
+            println ("[SCHEMA] Index: ${name} exists")
             return
         }
 
         if (propertyKeys.size == 0) {
-            println ("missing the 'propertyKeys property, not able to create an index")
+            println ("[SCHEMA] Missing the 'propertyKeys property, not able to create an index")
             return
         }
         val ib: IndexBuilder = mgmt.buildIndex(name,  if (isVertexIndex) Vertex::class.java else Edge::class.java )
@@ -48,7 +48,7 @@ class IndexBean {
             }
 
             if (key == null) {
-                println ("${indexOnly} doesn't exist, skip only property")
+                println ("[SCHEMA] ${indexOnly} doesn't exist, skip only property")
             } else {
                 ib.indexOnly(key)
             }
@@ -62,7 +62,7 @@ class IndexBean {
             ib.buildMixedIndex(mixedIndex)
         }
 
-        println ("index: ${name} creation is done")
+        println ("[SCHEMA] Index: ${name} creation is done")
     }
 
 }

@@ -14,28 +14,28 @@ class VertexCentricIndexBean {
 
     fun make(mgmt: JanusGraphManagement) {
         if (name == null) {
-            println ("missing 'name' property, not able to create a vertex-centric index")
+            println ("[SCHEMA] Missing 'name' property, not able to create a vertex-centric index")
             return
         }
 
         if (edge == null) {
-            println ("vertex-centric index needs 'edge' property to specify a edge label")
+            println ("[SCHEMA] Vertex-centric index needs 'edge' property to specify a edge label")
             return
         }
 
         val elabel = mgmt.getEdgeLabel(edge)
         if (elabel == null) {
-            println ("edge: ${edge} doesn't exist")
+            println ("[SCHEMA] Edge: ${edge} doesn't exist")
             return
         }
 
         if (mgmt.containsRelationIndex(elabel, name)) {
-            println ("vertex-centric index: ${name} exists")
+            println ("[SCHEMA] Vertex-centric index: ${name} exists")
             return
         }
 
         if (propertyKeys == null || propertyKeys.size == 0) {
-            println ("missing 'propertyKeys property, not able to create an index")
+            println ("[SCHEMA] Missing 'propertyKeys property, not able to create an index")
             return
         }
 
@@ -44,14 +44,14 @@ class VertexCentricIndexBean {
         for (property in propertyKeys) {
             val key = mgmt.getPropertyKey(property)
             if (key == null) {
-                println ("propertyKey:${property} doesn't exist, can't create ${name} vertex-centric index")
+                println ("[SCHEMA] PropertyKey:${property} doesn't exist, can't create ${name} vertex-centric index")
                 return
             }
             keys[counter++] = mgmt.getPropertyKey(property)
         }
 
         mgmt.buildEdgeIndex(elabel, name, Direction.valueOf(direction), Order.valueOf(order), *keys)
-        println ("vertex-centric index: ${name} creation is done")
+        println ("[SCHEMA] Vertex-centric index: ${name} creation is done")
     }
 
 }

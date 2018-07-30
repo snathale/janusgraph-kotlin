@@ -21,7 +21,7 @@ class JanusGraphJSONSchema(var graph: StandardJanusGraph) {
                     .make(mgmt)
         } catch (e: Exception) {
             rollbackTxs(graph)
-            print ("parse GSON failed: ${e.message}")
+            print ("[SCHEMA] Parse GSON failed: ${e.message}")
         }
     }
 
@@ -61,7 +61,7 @@ class JanusGraphJSONSchema(var graph: StandardJanusGraph) {
         val gsonFile: File = File(schemaFile)
 
         if (!gsonFile.exists()) {
-            throw Exception("file not found:" + schemaFile)
+            throw Exception("[SCHEMA] File not found:" + schemaFile)
         }
 
         val mapper = ObjectMapper()

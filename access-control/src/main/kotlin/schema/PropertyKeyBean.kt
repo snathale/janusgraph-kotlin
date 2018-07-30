@@ -10,17 +10,18 @@ class PropertyKeyBean {
 
     fun make(mgmt: JanusGraphManagement) {
         if (this.name == null) {
-            println("need \"name\" property to define a propertyKey")
+            println("[SCHEMA] Need \"name\" property to define a propertyKey")
         } else if (mgmt.containsPropertyKey(name)) {
-            println("property: ${name} exists")
+            println("[SCHEMA] Property: ${name} exists")
         } else {
             try {
+                println("-------> ${TypeMap.MAP.get(dataType)}")
                 mgmt.makePropertyKey(name)
                         .dataType(TypeMap.MAP.get(dataType))
                         .cardinality(Cardinality.valueOf(this.cardinality)).make()
-                println("propertyKey:${name} creation is done")
+                println("[SCHEMA] PropertyKey:${name} creation is done")
             } catch (e: Exception) {
-                println("can't create property:${name}, ${e.message}")
+                println("[SCHEMA] Can't create property:${name}, ${e.message}")
             }
         }
     }
