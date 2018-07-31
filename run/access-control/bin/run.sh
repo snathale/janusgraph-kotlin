@@ -11,7 +11,7 @@ cmd2=`./access-control --vertex=unitOrganization add --property=name Bahia --pro
 v2=`echo "$cmd2" | grep -oP '(?<=\[CLI\-ADD\] )(.*)'`
 echo "$cmd2" | grep -oP '(?<=\[CLI\] )(.*)'
 echo "$cmd2" | grep -oP '(?<=\[TRAVERSAL\] )(.*)'
-e1=`./access-control --edge=has add --source=$(echo v1) --target=$(echo v2)` #(v1 -> v2)
+e1=`./access-control --edge=has add --source=$(echo $v1) --target=$(echo $v2)` #(v1 -> v2)
 echo "$e1" | grep -oP "(?<=\[CLI\] )(.*)"
 echo "$e1" | grep -oP "(?<=\[TRAVERSAL\] )(.*)"
 cmd3=`./access-control --vertex=group add --property=name Marketing --property=code 1`
@@ -25,7 +25,7 @@ cmd4=`./access-control --vertex=accessRule add`
 v4=`echo "$cmd4" | grep -oP '(?<=\[CLI\-ADD\] )(.*)'`
 echo "$cmd4" | grep -oP '(?<=\[CLI\] )(.*)'
 echo "$cmd4" | grep -oP '(?<=\[TRAVERSAL\] )(.*)'
-e3=`./access-control --edge=provide --source=$(echo $v4) --target=$(echo $v3)` #(v4 -> v3)
+e3=`./access-control --edge=provide add --source=$(echo $v4) --target=$(echo $v3)` #(v4 -> v3)
 echo "$e3" | grep -oP "(?<=\[CLI\] )(.*)"
 echo "$e3" | grep -oP "(?<=\[TRAVERSAL\] )(.*)"
 cmd5=`./access-control --vertex=user add --property=name User1 --property=code 1`
@@ -72,7 +72,7 @@ echo "$cmd10" | grep -oP "(?<=\[TRAVERSAL\] )(.*)"
 e9=`./access-control --edge=inherit add --source=$(echo $v6) --target=$(echo $v10)`  #(v6 -> v10)
 echo "$e9" | grep -oP "(?<=\[CLI\] )(.*)"
 echo "$e9" | grep -oP "(?<=\[TRAVERSAL\] )(.*)"
-cmd11=`./access-control --vertex=rule add --property=name view_user --property=code 3`
+cmd11=`./access-control --vertex=rule add --property=name view_user --property=code 4`
 v11=`echo "$cmd11" | grep -oP "(?<=\[CLI\-ADD\] )(.*)"`
 echo "$cmd11" | grep -oP "(?<=\[CLI\] )(.*)"
 echo "$cmd11" | grep -oP "(?<=\[TRAVERSAL\] )(.*)"
