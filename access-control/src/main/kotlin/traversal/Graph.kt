@@ -25,6 +25,7 @@ class Graph(var graph: JanusGraph): IGraph {
             return true
         } catch (e: Exception) {
             graph.tx().rollback()
+            graph.close()
             println ("[TRAVERSAL] Impossible update property vertex ${e.message}")
             exitProcess(1)
         }
@@ -40,6 +41,7 @@ class Graph(var graph: JanusGraph): IGraph {
             return v.id() as Long
         } catch (e: Exception) {
             graph.tx().rollback()
+            graph.close()
             println ("[TRAVERSAL] Impossible add vertex ${e.message}")
             exitProcess(1)
         }
@@ -55,6 +57,7 @@ class Graph(var graph: JanusGraph): IGraph {
             return true
         } catch (e: Exception) {
             g.tx().rollback()
+            g.close()
             println ("[TRAVERSAL] Impossible add edge ${e.message}")
             exitProcess(1)
         }

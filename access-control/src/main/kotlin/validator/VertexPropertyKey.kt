@@ -25,6 +25,7 @@ abstract class VertexPropertyKey {
                     propertyKey.name.equals(PropertyKeyLabel.NAME.label) ||
                     propertyKey.name.equals(PropertyKeyLabel.DESCRIPTION.label) ||
                     propertyKey.name.equals(PropertyKeyLabel.ENABLE.label) ||
+                    propertyKey.name.equals(PropertyKeyLabel.CODE.label) ||
                     propertyKey.name.equals(PropertyKeyLabel.CREATION_DATE.label)
                 ) {
                     return true
@@ -35,7 +36,7 @@ abstract class VertexPropertyKey {
                     return true
                 }
             }
-            println("[SCHEMA] Impossible add the property $propertyKey to label $label")
+            println("[SCHEMA] Impossible add the property ${propertyKey.name} to label $label")
             exitProcess(1)
         }
     }

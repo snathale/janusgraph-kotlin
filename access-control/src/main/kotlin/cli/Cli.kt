@@ -80,7 +80,7 @@ class Add: CliktCommand () {
         if (graph is Edge && (source != null) && (target != null) ) {
             (graph as Edge).source = source!!.toLong()
             (graph as Edge).target = target!!.toLong()
-            TermUi.echo("[CLI] Adding edge")
+            TermUi.echo("[CLI] Adding edge $graph")
             Graph(janusGraph).addEdge(EdgeData(graph.label, source!!.toLong(), target!!.toLong()))
             println("[CLI] Add edge successfully")
         } else {
