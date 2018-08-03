@@ -1,0 +1,16 @@
+package br.com.ntopus.accesscontrol.model.edge
+
+import br.com.ntopus.accesscontrol.model.vertex.AccessGroup
+import br.com.ntopus.accesscontrol.model.vertex.AccessRule
+import com.syncleus.ferma.AbstractEdgeFrame
+import com.syncleus.ferma.annotations.InVertex
+import com.syncleus.ferma.annotations.OutVertex
+
+abstract class Own: AbstractEdgeFrame() {
+
+    @InVertex
+    abstract fun getIn(): AccessRule
+
+    @OutVertex
+    abstract fun getOut(): AccessGroup
+}
