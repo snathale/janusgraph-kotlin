@@ -1,6 +1,6 @@
 package br.com.ntopus.accesscontrol.model.data
 
-enum class PropertyKeyLabel(val label: String) {
+enum class PropertyLabel(val label: String) {
     NAME("name"),
     CODE("code"),
     OBSERVATION("observation"),

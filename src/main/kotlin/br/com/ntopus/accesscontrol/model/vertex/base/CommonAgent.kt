@@ -2,10 +2,10 @@ package br.com.ntopus.accesscontrol.model.vertex.base
 
 import java.util.*
 
-abstract class CommonAgent: Common() {
+abstract class CommonAgent(properties: Map<String, String>): Common(properties) {
 
-    val name: String = ""
-    val creationDate: Date? = null
-    val observation: String = ""
+    var name: String = properties["name"].toString()
+    var creationDate: Date = Date()
+    var observation: String = properties["observation"].toString()
 
 }

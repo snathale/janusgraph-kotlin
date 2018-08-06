@@ -1,13 +1,26 @@
 package br.com.ntopus.accesscontrol.model.vertex
 
-import br.com.ntopus.accesscontrol.model.interfaces.AddRelationship
-import br.com.ntopus.accesscontrol.model.interfaces.InheritRelationship
-import br.com.ntopus.accesscontrol.model.interfaces.RemoveRelationship
-import br.com.ntopus.accesscontrol.model.vertex.base.Common
-import br.com.ntopus.accesscontrol.model.vertex.base.Permission
-import com.syncleus.ferma.annotations.Adjacency
-import com.syncleus.ferma.annotations.Incidence
+import br.com.ntopus.accesscontrol.model.vertex.base.*
 
-abstract class AccessGroup: Permission() {
+class AccessGroup(properties: Map<String, String>): Permission(properties) {
+    override fun findByCode(code: String): Common {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun insert(): JSONResponse {
+        try {
+            val accessGroup = graph.addVertex("accessGroup")
+            accessGroup.property("name", this.name)
+            accessGroup.property("code", this.code)
+            accessGroup.property("creationDate", this.creationDate)
+            accessGroup.property("enable", this.enable)
+            accessGroup.property("description", this.description)
+            graph.tx().commit()
+        } catch (e: Exception) {
+            graph.tx().rollback()
+            return FAILResponse(data = e.message.toString())
+        }
+        return SUCCESSResponse(data = this)
+    }
 
 }

@@ -36,7 +36,7 @@ dependencies {
 //	runtime ("org.springframework.boot:spring-boot-devtools")
 //	testCompile ("org.springframework.boot:spring-boot-starter-test")
 //    compile ("com.github.pm-dev:kotlin-janusgraph-ogm:0.13.1")
-//    compile ("org.apache.tinkerpop:gremlin-core:3.3.3")
+    compile ("org.apache.tinkerpop:gremlin-core:3.3.3")
 //    compile ("org.apache.tinkerpop:gremlin-driver:3.3.3")
 //    compile ("org.apache.tinkerpop:hadoop-gremlin:3.3.3")
 //    compile ("org.apache.tinkerpop:spark-gremlin:3.3.3")
@@ -46,5 +46,5 @@ dependencies {
     compile ("org.janusgraph:janusgraph-es:0.2.1")
     compile ("org.janusgraph:janusgraph-cql:0.2.1")
     compile ("org.jetbrains.kotlin:kotlin-runtime:${kotlinVersion}")
-    compile ("com.beust:klaxon:3.0.3")
+    compile ("com.google.code.gson:gson:2.8.5")
 }

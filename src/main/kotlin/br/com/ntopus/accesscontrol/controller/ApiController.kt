@@ -1,39 +1,53 @@
 package br.com.ntopus.accesscontrol.controller
 
-import br.com.ntopus.accesscontrol.factory.UserFactory
+import br.com.ntopus.accesscontrol.model.GraphFactory
+import br.com.ntopus.accesscontrol.model.StatusResponse
+import br.com.ntopus.accesscontrol.model.data.EdgeData
 import br.com.ntopus.accesscontrol.model.vertex.*
-import br.com.ntopus.accesscontrol.model.vertex.base.Permission
-import br.com.ntopus.accesscontrol.model.vertex.base.CommonAgent
-import com.syncleus.ferma.DelegatingFramedGraph
 import br.com.ntopus.accesscontrol.model.data.VertexData
+import br.com.ntopus.accesscontrol.model.edge.Has
+import br.com.ntopus.accesscontrol.model.vertex.base.ERRORResponse
+import br.com.ntopus.accesscontrol.model.vertex.base.JSONResponse
 import org.apache.tinkerpop.gremlin.structure.Vertex
 import org.janusgraph.core.JanusGraph
 import org.springframework.web.bind.annotation.*
-
+import com.google.gson.GsonBuilder
 
 
 @RestController
 @RequestMapping("api/v1")
-class ApiController(var graph: JanusGraph) {
+class ApiController() {
 
-    @PutMapping
-    fun addVertex(@RequestBody vertex: VertexData) {
-        val fg = DelegatingFramedGraph<JanusGraph>(
-                graph,
-                true,
-                setOf(
-                        CommonAgent::class.java,
-                        Permission::class.java,
-                        AccessGroup::class.java,
-                        AccessRule::class.java,
-                        Group::class.java,
-                        Organization::class.java,
-                        Rule::class.java,
-                        UnitOrganization::class.java,
-                        User::class.java)
-        )
-        val vertexFactory = UserFactory.createFactory(vertex.label)
-        val v = fg.addFramedVertex(vertexFactory)
+    val graph = GraphFactory.open()
+    @PostMapping("/addVertex")
+    fun addVertex(@RequestBody vertex: VertexData): String {
+        val gson = GsonBuilder().setPrettyPrinting().create()
+        val propertiesMap= vertex.properties.associateBy({it.name}, {it.value})
+        when(vertex.label) {
+            "user" -> return gson.toJson(User(propertiesMap).insert())
+            "organization" -> return gson.toJson(Organization(propertiesMap).insert())
+            "unitOrganization" -> gson.toJson(UnitOrganization(propertiesMap).insert())
+            "group" -> return gson.toJson(Group(propertiesMap).insert())
+            "rule" -> return gson.toJson(Rule(propertiesMap).insert())
+            "accessGroup" -> return gson.toJson(AccessGroup(propertiesMap).insert())
+            "accessRule" -> return gson.toJson(AccessRule(propertiesMap).insert())
+            else -> return gson.toJson(ERRORResponse(message = "Impossible createEdge vertex with this label"))
+        }
+        return gson.toJson(ERRORResponse(message = "Impossible createEdge this vertex"))
+    }
+
+    @PostMapping("/addEdge")
+    fun addEdge(@RequestBody edge: EdgeData) {
+
+        when(edge.source.label) {
+//            "user" ->
+//            "provide"
+//            "own"
+//            "createEdge"
+//            "remove"
+//            "associated"
+//            "inherit"
+        }
     }
 
     data class VertexList (val label: String, val properties: Map<String, Vertex>, val edgeIn: ArrayList<Edge>, val edgeOut: ArrayList<Edge>)
