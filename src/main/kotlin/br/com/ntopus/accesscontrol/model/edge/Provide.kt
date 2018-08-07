@@ -1,7 +1,7 @@
 package br.com.ntopus.accesscontrol.model.edge
 
 import br.com.ntopus.accesscontrol.model.vertex.AccessRule
-import br.com.ntopus.accesscontrol.model.vertex.base.CommonAgent
+import br.com.ntopus.accesscontrol.model.vertex.base.ICommonAgent
 import com.syncleus.ferma.AbstractEdgeFrame
 import com.syncleus.ferma.annotations.InVertex
 import com.syncleus.ferma.annotations.OutVertex
@@ -12,5 +12,5 @@ abstract class Provide: AbstractEdgeFrame() {
     abstract fun getIn(): AccessRule
 
     @OutVertex
-    abstract fun getOut(): CommonAgent
+    abstract fun getOut(): ICommonAgent
 }

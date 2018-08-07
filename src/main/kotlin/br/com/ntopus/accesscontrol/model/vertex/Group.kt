@@ -1,26 +1,34 @@
 package br.com.ntopus.accesscontrol.model.vertex
 
-import br.com.ntopus.accesscontrol.model.vertex.base.CommonAgent
-import br.com.ntopus.accesscontrol.model.vertex.base.FAILResponse
-import br.com.ntopus.accesscontrol.model.vertex.base.JSONResponse
-import br.com.ntopus.accesscontrol.model.vertex.base.SUCCESSResponse
+import br.com.ntopus.accesscontrol.model.GraphFactory
+import br.com.ntopus.accesscontrol.model.data.PropertyLabel
+import br.com.ntopus.accesscontrol.model.data.VertexLabel
+import br.com.ntopus.accesscontrol.model.vertex.base.*
+import org.apache.tinkerpop.gremlin.structure.Vertex
+import java.time.LocalDate
 import java.util.*
 
 
-class Group(properties: Map<String, String>): CommonAgent(properties) {
-    override fun insert(): JSONResponse {
-        try {
-            val group = graph.addVertex("group")
-            group.property("name", this.name)
-            group.property("code", this.code)
-            group.property("observation", this.observation)
-            group.property("creationDate", Date())
-            group.property("enable", true)
-            graph.tx().commit()
-        } catch (e: Exception) {
-            graph.tx().rollback()
-            return FAILResponse(data = e.message.toString())
+class Group(properties: Map<String, String>): ICommonAgent(properties) {
+
+    companion object {
+        fun findByCode(code: String): ICommon {
+            val g = GraphFactory.open().traversal()
+            val values = g.V().hasLabel(VertexLabel.GROUP.label)
+                    .has(PropertyLabel.CODE.label, code).valueMap<Vertex>()
+            val group = User(hashMapOf())
+            for (item in values) {
+                group.name = item.get(PropertyLabel.NAME.label).toString()
+                group.code = item.get(PropertyLabel.CODE.label).toString()
+                group.enable = item.get(PropertyLabel.ENABLE.label) as Boolean
+                group.observation = item.get(PropertyLabel.OBSERVATION.label).toString()
+                group.creationDate = item.get(PropertyLabel.CREATION_DATE.label) as Date
+            }
+            return group
         }
-        return SUCCESSResponse(data = this)
     }
+
+//    override fun createEdge(target: VertexInfo): JSONResponse {
+//        return FAILResponse(data = "Impossible create a edge from this vertex")
+//    }
 }

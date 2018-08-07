@@ -1,53 +1,46 @@
 package br.com.ntopus.accesscontrol.controller
 
+import br.com.ntopus.accesscontrol.factory.MapperFactory
 import br.com.ntopus.accesscontrol.model.GraphFactory
-import br.com.ntopus.accesscontrol.model.StatusResponse
 import br.com.ntopus.accesscontrol.model.data.EdgeData
-import br.com.ntopus.accesscontrol.model.vertex.*
 import br.com.ntopus.accesscontrol.model.data.VertexData
-import br.com.ntopus.accesscontrol.model.edge.Has
 import br.com.ntopus.accesscontrol.model.vertex.base.ERRORResponse
-import br.com.ntopus.accesscontrol.model.vertex.base.JSONResponse
 import org.apache.tinkerpop.gremlin.structure.Vertex
-import org.janusgraph.core.JanusGraph
 import org.springframework.web.bind.annotation.*
 import com.google.gson.GsonBuilder
 
 
 @RestController
 @RequestMapping("api/v1")
-class ApiController() {
+class ApiController {
 
     val graph = GraphFactory.open()
     @PostMapping("/addVertex")
     fun addVertex(@RequestBody vertex: VertexData): String {
         val gson = GsonBuilder().setPrettyPrinting().create()
-        val propertiesMap= vertex.properties.associateBy({it.name}, {it.value})
-        when(vertex.label) {
-            "user" -> return gson.toJson(User(propertiesMap).insert())
-            "organization" -> return gson.toJson(Organization(propertiesMap).insert())
-            "unitOrganization" -> gson.toJson(UnitOrganization(propertiesMap).insert())
-            "group" -> return gson.toJson(Group(propertiesMap).insert())
-            "rule" -> return gson.toJson(Rule(propertiesMap).insert())
-            "accessGroup" -> return gson.toJson(AccessGroup(propertiesMap).insert())
-            "accessRule" -> return gson.toJson(AccessRule(propertiesMap).insert())
-            else -> return gson.toJson(ERRORResponse(message = "Impossible createEdge vertex with this label"))
+        return try {
+            val t = MapperFactory.createFactory(vertex).insert()
+            gson.toJson(t)
+        } catch (e: Exception) {
+            gson.toJson(ERRORResponse(message = "Impossible create a Vertex with this label"))
         }
-        return gson.toJson(ERRORResponse(message = "Impossible createEdge this vertex"))
     }
 
     @PostMapping("/addEdge")
-    fun addEdge(@RequestBody edge: EdgeData) {
-
-        when(edge.source.label) {
-//            "user" ->
-//            "provide"
-//            "own"
-//            "createEdge"
-//            "remove"
-//            "associated"
-//            "inherit"
-        }
+    fun addEdge(@RequestBody edge: EdgeData): String {
+//        val vertex = VertexInfo(edge.target.label, edge.target.code)
+//        val gson = GsonBuilder().setPrettyPrinting().create()
+//        return when(edge.source.label) {
+//            "user" -> gson.toJson(User.findByCode(edge.source.code).createEdge(vertex))
+//            "organization" -> gson.toJson(Organization.findByCode(edge.source.code).createEdge(vertex))
+//            "unitOrganization" -> gson.toJson(UnitOrganization.findByCode(edge.source.code).createEdge(vertex))
+//            "group" -> gson.toJson(Group.findByCode(edge.source.code).createEdge(vertex))
+//            "rule" -> gson.toJson(Rule.findByCode(edge.source.code).createEdge(vertex))
+//            "accessGroup" -> gson.toJson(AccessGroup.findByCode(edge.source.code).createEdge(vertex))
+//            "accessRule" -> gson.toJson(AccessRule.findByCode(edge.source.code).createEdge(vertex))
+//            else -> gson.toJson(ERRORResponse(message = "Impossible create a Edge this label"))
+//        }
+        return ""
     }
 
     data class VertexList (val label: String, val properties: Map<String, Vertex>, val edgeIn: ArrayList<Edge>, val edgeOut: ArrayList<Edge>)

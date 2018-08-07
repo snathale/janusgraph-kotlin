@@ -9,5 +9,5 @@ object GraphFactory {
     init {
         graph = JanusGraphFactory.open(ClassPathResource("janusgraph-cql-es.properties").file.absolutePath)
     }
-    fun open () = graph
+    fun open() = graph
 }
