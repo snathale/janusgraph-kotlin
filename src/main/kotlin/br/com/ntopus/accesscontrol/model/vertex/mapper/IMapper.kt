@@ -7,7 +7,7 @@ import br.com.ntopus.accesscontrol.model.vertex.base.JSONResponse
 
 interface IMapper {
     fun insert (): JSONResponse
-    fun updateProperty (vertex: VertexInfo, property: Property): JSONResponse
+    fun updateProperty (properties: List<Property>): JSONResponse
     fun createEdge(target: VertexInfo): JSONResponse
-    fun delete (vertex: VertexInfo, code: String): JSONResponse
+    fun delete (vertex: VertexInfo): JSONResponse
 }

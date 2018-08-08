@@ -9,10 +9,6 @@ import java.util.*
 
 class Rule(properties: Map<String, String>): IPermission(properties) {
 
-//    override fun createEdge(target: VertexInfo): JSONResponse {
-//        return FAILResponse(data = "Impossible create a edge from this vertex")
-//    }
-
     companion object {
         fun findByCode(code: String): ICommon {
             val g = GraphFactory.open().traversal()
@@ -30,6 +26,4 @@ class Rule(properties: Map<String, String>): IPermission(properties) {
         }
     }
 
-//    @Incidence(label = "has")
-//    abstract override fun createEdge(vertex: ICommon)
 }

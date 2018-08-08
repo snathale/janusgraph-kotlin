@@ -1,17 +1,45 @@
 package br.com.ntopus.accesscontrol.model.vertex.validator
 
+import br.com.ntopus.accesscontrol.model.GraphFactory
 import br.com.ntopus.accesscontrol.model.data.Property
+import br.com.ntopus.accesscontrol.model.data.PropertyLabel
+import br.com.ntopus.accesscontrol.model.data.VertexLabel
 import br.com.ntopus.accesscontrol.model.interfaces.VertexInfo
-import br.com.ntopus.accesscontrol.model.vertex.User
-import br.com.ntopus.accesscontrol.model.vertex.base.ICommon
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal
+import org.apache.tinkerpop.gremlin.structure.Vertex
 
-class UserValidator: DefaultValilator() {
+class UserValidator: DefaultValidator() {
 
-    override fun beforeUpdate(properties: List<Property>): Boolean {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    override fun hasVertexTarget(target: VertexInfo): GraphTraversal<Vertex, Vertex>? {
+        val graph = GraphFactory.open()
+        val g = graph.traversal()
+        return g.V().hasLabel(VertexLabel.ACCESS_RULE.label).has(PropertyLabel.CODE.label, target.code)
     }
 
-    override fun beforeDelete(vvertex: VertexInfo): Boolean {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    override fun hasVertex(source: VertexInfo): GraphTraversal<Vertex, Vertex>? {
+        val g = graph.traversal()
+        return g.V().hasLabel(VertexLabel.USER.label).has(PropertyLabel.CODE.label, source.code)
+    }
+
+    override fun isCorrectVertexTarget(target: VertexInfo): Boolean {
+        return target.label.equals(VertexLabel.ACCESS_GROUP.label)
+    }
+
+    override fun hasProperty(vertex: VertexInfo, property: Property): Boolean {
+        val g = graph.traversal()
+        return g.V().hasLabel(VertexLabel.USER.label).has(property.name, property.value) != null
+    }
+
+    override fun canUpdateVertexProperty(properties: List<Property>): Boolean {
+        val iterator = properties.iterator()
+        while (iterator.hasNext()) {
+            when((iterator as Property).name) {
+                "name" -> iterator.next()
+                "observation" -> iterator.next()
+                "enable" -> iterator.next()
+                else -> return false
+            }
+        }
+        return true
     }
 }

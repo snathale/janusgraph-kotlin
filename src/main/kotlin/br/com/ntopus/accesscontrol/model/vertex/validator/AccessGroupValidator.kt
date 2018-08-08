@@ -1,17 +1,29 @@
 package br.com.ntopus.accesscontrol.model.vertex.validator
 
 import br.com.ntopus.accesscontrol.model.data.Property
+import br.com.ntopus.accesscontrol.model.data.PropertyLabel
+import br.com.ntopus.accesscontrol.model.data.VertexLabel
 import br.com.ntopus.accesscontrol.model.interfaces.VertexInfo
-import br.com.ntopus.accesscontrol.model.vertex.AccessGroup
-import br.com.ntopus.accesscontrol.model.vertex.base.ICommon
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal
+import org.apache.tinkerpop.gremlin.structure.Vertex
 
-class AccessGroupValidator: DefaultValilator() {
-
-    override fun beforeUpdate(properties: List<Property>): Boolean {
+class AccessGroupValidator: DefaultValidator() {
+    override fun hasVertexTarget(target: VertexInfo): GraphTraversal<Vertex, Vertex>? {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun beforeDelete(vvertex: VertexInfo): Boolean {
+    override fun hasVertex(source: VertexInfo): GraphTraversal<Vertex, Vertex>? {
+        val g = graph.traversal()
+        return g.V().hasLabel(VertexLabel.ACCESS_GROUP.label).has(PropertyLabel.CODE.label, source.code)
+    }
+
+    override fun isCorrectVertexTarget(target: VertexInfo): Boolean {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
+
+    override fun hasProperty(vertex: VertexInfo, property: Property): Boolean {
+        val g = graph.traversal()
+        return g.V().hasLabel(VertexLabel.ACCESS_GROUP.label).has(property.name, property.value) != null
+    }
+
 }

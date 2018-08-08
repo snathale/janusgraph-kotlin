@@ -13,10 +13,47 @@ import org.janusgraph.core.JanusGraph
 
 class RuleMapper (val properties: Map<String, String>, val graph: JanusGraph): IMapper {
     private val rule = Rule(properties)
+
+    override fun createEdge(target: VertexInfo): JSONResponse {
+        return FAILResponse(data = "@RCEE-001 Impossible create a edge from this vertex")
+    }
+
+    override fun updateProperty(properties: List<Property>): JSONResponse {
+        if (!RuleValidator().canUpdateVertexProperty(properties)) {
+            return FAILResponse(data = "@RUPE-001 Rule not have this properties $properties")
+        }
+        try {
+            val g = graph.traversal()
+            val user = g.V().hasLabel(VertexLabel.RULE.label)
+            for (property in properties) {
+                user.property(property.name, property.value).next()
+            }
+            graph.tx().commit()
+        } catch (e: Exception) {
+            graph.tx().rollback()
+            return FAILResponse(data = "@RUPE-002 ${e.message.toString()}")
+        }
+        return SUCCESSResponse(data = this.rule)
+    }
+
+    override fun delete(vertex: VertexInfo): JSONResponse {
+        val rule = RuleValidator()
+                .hasVertex(VertexInfo(VertexLabel.RULE.label, this.rule.code))
+                ?: return FAILResponse(data = "@RDE-001 Impossible find Rule ${this.rule}")
+        try {
+            rule.property(PropertyLabel.ENABLE, false)
+            graph.tx().commit()
+        } catch (e: Exception) {
+            graph.tx().rollback()
+            return FAILResponse(data = "@RDE-002 ${e.message.toString()}")
+        }
+        return SUCCESSResponse(data = null)
+    }
+
     override fun insert(): JSONResponse {
         try {
-            if (!RuleValidator().beforeInsert(this.rule)) {
-                throw Exception("Empty Rule properties")
+            if (!RuleValidator().canInsertVertex(this.rule)) {
+                throw Exception("@RCVE-001 Empty Rule properties")
             }
             val rule = graph.addVertex(VertexLabel.RULE.label)
             rule.property(PropertyLabel.NAME.label, this.rule.name)
@@ -27,20 +64,9 @@ class RuleMapper (val properties: Map<String, String>, val graph: JanusGraph): I
             graph.tx().commit()
         } catch (e: Exception) {
             graph.tx().rollback()
-            return FAILResponse(data = e.message.toString())
+            return FAILResponse(data = "@RCVE-002 ${e.message.toString()}")
         }
-        return SUCCESSResponse(data = this)
+        return SUCCESSResponse(data = this.rule)
     }
 
-    override fun updateProperty(vertex: VertexInfo, property: Property): JSONResponse {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun createEdge(target: VertexInfo): JSONResponse {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun delete(vertex: VertexInfo, code: String): JSONResponse {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
 }

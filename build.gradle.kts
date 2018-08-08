@@ -15,7 +15,7 @@ group = "br.com.ntopus"
 version = "0.0.1-SNAPSHOT"
 
 application {
-    mainClassName="br.com.ntopus.accesscontrol.AccessControlApplication"
+    mainClassName = "br.com.ntopus.accesscontrol.AccessControlApplication"
 }
 
 repositories {

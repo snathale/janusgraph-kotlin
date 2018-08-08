@@ -7,12 +7,11 @@ interface JSONResponse {
     val status: String
 }
 
-data class SUCCESSResponse(override val status: String = StatusResponse.SUCCESS.toString(), val data: Any): JSONResponse
+data class SUCCESSResponse(override val status: String = StatusResponse.SUCCESS.toString(), val data: Any?): JSONResponse
 data class FAILResponse(override val status: String = StatusResponse.FAIL.toString(), val data: Any): JSONResponse
 data class ERRORResponse(override val status: String = StatusResponse.ERROR.toString(), val message: String): JSONResponse
 abstract class ICommon(properties: Map<String, String>) {
 
-//    val graph: JanusGraph = GraphFactory.open()
     @SerializedName("code")
     var code: String = properties["code"].toString()
 
