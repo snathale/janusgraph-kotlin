@@ -26,33 +26,4 @@ class Organization(properties: Map<String, String>): ICommonAgent(properties) {
             return unitOrganization
         }
     }
-
-    fun createEdge(target: VertexInfo) {
-//        if (!target.label.equals(VertexLabel.UNIT_ORGANIZATION.label)) {
-//            return FAILResponse(data = "Impossible create this edge $target from Organization")
-//        }
-//
-//        val g = graph.traversal()
-//        val organization = g.V().hasLabel(VertexLabel.ORGANIZATION.label).has(PropertyLabel.CODE.label, this.code)
-//        if ( organization == null) {
-//            return FAILResponse(data = "Impossible find this Organization $this")
-//        }
-//
-//        val unitOrganization = g.V().hasLabel(VertexLabel.UNIT_ORGANIZATION.label).has(PropertyLabel.CODE.label, target.code)
-//        if (unitOrganization == null) {
-//            return FAILResponse(data = "Impossible find this Unit Organization $target")
-//        }
-//
-//        try {
-//            organization.addE(EdgeLabel.HAS.label).to(unitOrganization).next()
-//            graph.tx().commit()
-//        } catch (e: Exception) {
-//            g.tx().rollback()
-//            return FAILResponse(data = e.message.toString())
-//        }
-//        return SUCCESSResponse(data = this)
-    }
-
-//    @Incidence(label = "has")
-//    abstract override fun createEdge(vertex: ICommon)
 }

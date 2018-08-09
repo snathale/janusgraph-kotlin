@@ -8,6 +8,7 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal
 import org.apache.tinkerpop.gremlin.structure.Vertex
 
 class OrganizationValidator: DefaultValidator() {
+
     override fun hasVertexTarget(target: VertexInfo): GraphTraversal<Vertex, Vertex>? {
         val g = graph.traversal()
         return g.V().hasLabel(VertexLabel.ORGANIZATION.label).has(PropertyLabel.CODE.label, target.code)

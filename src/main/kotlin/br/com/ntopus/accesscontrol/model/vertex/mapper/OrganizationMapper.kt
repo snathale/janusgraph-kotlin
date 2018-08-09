@@ -14,7 +14,7 @@ import br.com.ntopus.accesscontrol.model.vertex.validator.OrganizationValidator
 
 class OrganizationMapper (val properties: Map<String, String>): IMapper {
     private val organization = Organization(properties)
-    val graph = GraphFactory.open()
+    private val graph = GraphFactory.open()
 
     override fun updateProperty(properties: List<Property>): JSONResponse {
         if (!OrganizationValidator().canUpdateVertexProperty(properties)) {

@@ -28,7 +28,4 @@ class Group(properties: Map<String, String>): ICommonAgent(properties) {
         }
     }
 
-//    override fun createEdge(target: VertexInfo): JSONResponse {
-//        return FAILResponse(data = "Impossible create a edge from this vertex")
-//    }
 }

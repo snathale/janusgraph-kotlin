@@ -5,9 +5,11 @@ import org.janusgraph.core.JanusGraphFactory
 import org.springframework.core.io.ClassPathResource
 
 object GraphFactory {
-    private val graph: JanusGraph
-    init {
-        graph = JanusGraphFactory.open(ClassPathResource("janusgraph-cql-es.properties").file.absolutePath)
+    private var graph: JanusGraph = JanusGraphFactory.open(ClassPathResource("janusgraph-cql-es.properties").file.absolutePath)
+    fun open(): JanusGraph {
+        return this.graph
     }
-    fun open() = graph
+    fun setInstance (config: String) {
+        this.graph = JanusGraphFactory.open(ClassPathResource(config).file.absolutePath)
+    }
 }

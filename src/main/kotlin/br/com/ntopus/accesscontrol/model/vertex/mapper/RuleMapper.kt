@@ -1,5 +1,6 @@
 package br.com.ntopus.accesscontrol.model.vertex.mapper
 
+import br.com.ntopus.accesscontrol.model.GraphFactory
 import br.com.ntopus.accesscontrol.model.data.Property
 import br.com.ntopus.accesscontrol.model.data.PropertyLabel
 import br.com.ntopus.accesscontrol.model.data.VertexLabel
@@ -11,8 +12,9 @@ import br.com.ntopus.accesscontrol.model.vertex.base.SUCCESSResponse
 import br.com.ntopus.accesscontrol.model.vertex.validator.RuleValidator
 import org.janusgraph.core.JanusGraph
 
-class RuleMapper (val properties: Map<String, String>, val graph: JanusGraph): IMapper {
+class RuleMapper (val properties: Map<String, String>): IMapper {
     private val rule = Rule(properties)
+    private val graph = GraphFactory.open()
 
     override fun createEdge(target: VertexInfo): JSONResponse {
         return FAILResponse(data = "@RCEE-001 Impossible create a edge from this vertex")

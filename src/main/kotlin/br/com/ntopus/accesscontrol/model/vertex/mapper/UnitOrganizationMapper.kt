@@ -1,5 +1,6 @@
 package br.com.ntopus.accesscontrol.model.vertex.mapper
 
+import br.com.ntopus.accesscontrol.model.GraphFactory
 import br.com.ntopus.accesscontrol.model.data.EdgeLabel
 import br.com.ntopus.accesscontrol.model.data.Property
 import br.com.ntopus.accesscontrol.model.data.PropertyLabel
@@ -13,8 +14,9 @@ import br.com.ntopus.accesscontrol.model.vertex.validator.UnitOrganizationValida
 import org.janusgraph.core.JanusGraph
 import java.util.*
 
-class UnitOrganizationMapper (val properties: Map<String, String>, val graph: JanusGraph): IMapper {
+class UnitOrganizationMapper (val properties: Map<String, String>): IMapper {
     private val unitOrganization = UnitOrganization(properties)
+    private val graph = GraphFactory.open()
 
     override fun updateProperty(properties: List<Property>): JSONResponse {
         if (!UnitOrganizationValidator().canUpdateVertexProperty(properties)) {

@@ -8,8 +8,16 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal
 import org.apache.tinkerpop.gremlin.structure.Vertex
 
 class AccessGroupValidator: DefaultValidator() {
+
     override fun hasVertexTarget(target: VertexInfo): GraphTraversal<Vertex, Vertex>? {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        val g = graph.traversal()
+        return when(target.label) {
+            VertexLabel.ACCESS_GROUP.label -> g.V().hasLabel(VertexLabel.ACCESS_GROUP.label)
+                    .has(PropertyLabel.CODE.label, target.code)
+            VertexLabel.RULE.label -> g.V().hasLabel(VertexLabel.RULE.label)
+                    .has(PropertyLabel.CODE.label, target.code)
+            else -> null
+        }
     }
 
     override fun hasVertex(source: VertexInfo): GraphTraversal<Vertex, Vertex>? {
@@ -18,7 +26,12 @@ class AccessGroupValidator: DefaultValidator() {
     }
 
     override fun isCorrectVertexTarget(target: VertexInfo): Boolean {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        val g = graph.traversal()
+        return when(target.label) {
+            VertexLabel.ACCESS_GROUP.label -> target.label.equals(VertexLabel.ACCESS_GROUP.label)
+            VertexLabel.RULE.label -> target.label.equals(VertexLabel.RULE.label)
+            else -> false
+        }
     }
 
     override fun hasProperty(vertex: VertexInfo, property: Property): Boolean {

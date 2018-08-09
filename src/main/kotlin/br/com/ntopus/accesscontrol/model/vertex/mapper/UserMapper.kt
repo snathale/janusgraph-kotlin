@@ -1,5 +1,6 @@
 package br.com.ntopus.accesscontrol.model.vertex.mapper
 
+import br.com.ntopus.accesscontrol.model.GraphFactory
 import br.com.ntopus.accesscontrol.model.data.EdgeLabel
 import br.com.ntopus.accesscontrol.model.data.Property
 import br.com.ntopus.accesscontrol.model.data.PropertyLabel
@@ -10,10 +11,13 @@ import br.com.ntopus.accesscontrol.model.vertex.base.FAILResponse
 import br.com.ntopus.accesscontrol.model.vertex.base.JSONResponse
 import br.com.ntopus.accesscontrol.model.vertex.base.SUCCESSResponse
 import br.com.ntopus.accesscontrol.model.vertex.validator.UserValidator
-import org.janusgraph.core.JanusGraph
+import java.text.SimpleDateFormat
 
-class UserMapper (val properties: Map<String, String>, val graph: JanusGraph): IMapper {
-    val user = User(properties)
+data class LocalUser(val code: String, val name: String, val creationDate: String, val enable: Boolean, val observation: String)
+class UserMapper (val properties: Map<String, String>): IMapper {
+    private val user = User(properties)
+    private val graph = GraphFactory.open()
+
     override fun insert(): JSONResponse {
         try {
             if (!UserValidator().canInsertVertex(this.user)) {
@@ -32,7 +36,9 @@ class UserMapper (val properties: Map<String, String>, val graph: JanusGraph): I
             graph.tx().rollback()
             return FAILResponse(data = "@UCVE-002 ${e.message.toString()}")
         }
-        return SUCCESSResponse(data = this.user)
+        val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
+        val localUser = LocalUser(this.user.code, this.user.name, format.format(this.user.creationDate), this.user.enable, this.user.observation)
+        return SUCCESSResponse(data = localUser)
     }
 
     override fun updateProperty(properties: List<Property>): JSONResponse {

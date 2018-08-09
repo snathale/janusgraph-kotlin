@@ -1,6 +1,7 @@
 package br.com.ntopus.accesscontrol.model.vertex.mapper
 
 import br.com.ntopus.accesscontrol.model.GraphFactory
+import br.com.ntopus.accesscontrol.model.data.EdgeLabel
 import br.com.ntopus.accesscontrol.model.data.Property
 import br.com.ntopus.accesscontrol.model.data.PropertyLabel
 import br.com.ntopus.accesscontrol.model.data.VertexLabel
@@ -10,6 +11,8 @@ import br.com.ntopus.accesscontrol.model.vertex.base.FAILResponse
 import br.com.ntopus.accesscontrol.model.vertex.base.JSONResponse
 import br.com.ntopus.accesscontrol.model.vertex.base.SUCCESSResponse
 import br.com.ntopus.accesscontrol.model.vertex.validator.AccessRuleValidator
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal
+import org.apache.tinkerpop.gremlin.structure.Vertex
 
 class AccessRuleMapper (val properties: Map<String, String>): IMapper {
     private val accessRule = AccessRule(properties)
@@ -46,6 +49,7 @@ class AccessRuleMapper (val properties: Map<String, String>): IMapper {
         }
         return SUCCESSResponse(data = null)
     }
+
     override fun insert(): JSONResponse {
         try {
             if (!AccessRuleValidator().canInsertVertex(this.accessRule)) {
@@ -64,6 +68,46 @@ class AccessRuleMapper (val properties: Map<String, String>): IMapper {
     }
 
     override fun createEdge(target: VertexInfo): JSONResponse {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        if (!AccessRuleValidator().isCorrectVertexTarget(target)) {
+            return FAILResponse(data = "@ARCEE-001 Impossible create this edge $target from Access Rule")
+        }
+        val accessGroup = AccessRuleValidator()
+                .hasVertex(VertexInfo(VertexLabel.ACCESS_RULE.label, this.accessRule.code))
+                ?: return FAILResponse(data = "@ARCEE-002 Impossible find Access Rule ${this.accessRule}")
+        val vTarget = AccessRuleValidator().hasVertexTarget(target)
+                ?: return FAILResponse(data = "@ARCEE-003 Impossible find ${target.label.capitalize()} $target")
+        return when(target.edgeLabel) {
+            EdgeLabel.PROVIDE.label -> this.createProvideEdge(accessGroup, vTarget, target)
+            EdgeLabel.OWN.label -> this.createOwnEdgeFromAccess(accessGroup, vTarget, target)
+            else -> FAILResponse(data = "@ARCEE-006 Impossible create a edge from ${this.accessRule}")
+        }
+    }
+
+    private fun createProvideEdge(
+            vSource: GraphTraversal<Vertex, Vertex>, vTarget: GraphTraversal<Vertex, Vertex>, target: VertexInfo
+    ): JSONResponse {
+        try {
+            vSource.addE(EdgeLabel.PROVIDE.label).to(vTarget).next()
+            graph.tx().commit()
+        } catch (e: Exception) {
+            graph.tx().rollback()
+            return FAILResponse(data = "@ARCEE-004 ${e.message.toString()}")
+        }
+        val vertexInfo = VertexInfo(VertexLabel.ACCESS_GROUP.label, this.accessRule.code)
+        return SUCCESSResponse(data = EdgeCreated(vertexInfo, target, EdgeLabel.PROVIDE.label))
+    }
+
+    private fun createOwnEdgeFromAccess(
+            vSource: GraphTraversal<Vertex, Vertex>, vTarget: GraphTraversal<Vertex, Vertex>, target: VertexInfo
+    ): JSONResponse {
+        try {
+            vSource.addE(EdgeLabel.OWN.label).to(vTarget).next()
+            graph.tx().commit()
+        } catch (e: Exception) {
+            graph.tx().rollback()
+            return FAILResponse(data = "@ARCEE-005 ${e.message.toString()}")
+        }
+        val vertexInfo = VertexInfo(VertexLabel.ACCESS_GROUP.label, this.accessRule.code)
+        return SUCCESSResponse(data = EdgeCreated(vertexInfo, target, EdgeLabel.OWN.label))
     }
 }

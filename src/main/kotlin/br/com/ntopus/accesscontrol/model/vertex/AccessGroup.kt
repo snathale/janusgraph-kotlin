@@ -8,9 +8,6 @@ import org.apache.tinkerpop.gremlin.structure.Vertex
 import java.util.*
 
 class AccessGroup(properties: Map<String, String>): IPermission(properties) {
-//    override fun createEdge(target: VertexInfo): JSONResponse {
-//        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-//    }
 
     companion object {
         fun findByCode(code: String): ICommon {
@@ -28,21 +25,5 @@ class AccessGroup(properties: Map<String, String>): IPermission(properties) {
             return acce
         }
     }
-//
-//    override fun insert(): JSONResponse {
-//        try {
-//            val accessGroup = graph.addVertex("accessGroup")
-//            accessGroup.property("name", this.name)
-//            accessGroup.property("code", this.code)
-//            accessGroup.property("creationDate", this.creationDate)
-//            accessGroup.property("enable", this.enable)
-//            accessGroup.property("description", this.description)
-//            graph.tx().commit()
-//        } catch (e: Exception) {
-//            graph.tx().rollback()
-//            return FAILResponse(data = e.message.toString())
-//        }
-//        return SUCCESSResponse(data = this)
-//    }
 
 }
