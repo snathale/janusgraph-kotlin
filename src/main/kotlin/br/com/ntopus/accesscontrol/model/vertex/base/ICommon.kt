@@ -13,11 +13,15 @@ data class ERRORResponse(override val status: String = StatusResponse.ERROR.toSt
 abstract class ICommon(properties: Map<String, String>) {
 
     @SerializedName("code")
-    var code: String = properties["code"].toString()
+    var code: String = this.toString(properties["code"])
 
     @SerializedName("enable")
     var enable: Boolean = if (properties["enable"] != null) properties["enable"]!!.toBoolean() else true
 
-    @SerializedName("name")
-    var name: String = properties["name"].toString()
+    fun toString(value: String?): String {
+        if (value.toString() == "null") {
+            return ""
+        }
+        return value.toString()
+    }
 }

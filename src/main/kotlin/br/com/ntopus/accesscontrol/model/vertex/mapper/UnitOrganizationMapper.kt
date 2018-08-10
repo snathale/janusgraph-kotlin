@@ -5,7 +5,6 @@ import br.com.ntopus.accesscontrol.model.data.EdgeLabel
 import br.com.ntopus.accesscontrol.model.data.Property
 import br.com.ntopus.accesscontrol.model.data.PropertyLabel
 import br.com.ntopus.accesscontrol.model.data.VertexLabel
-import br.com.ntopus.accesscontrol.model.interfaces.VertexInfo
 import br.com.ntopus.accesscontrol.model.vertex.UnitOrganization
 import br.com.ntopus.accesscontrol.model.vertex.base.FAILResponse
 import br.com.ntopus.accesscontrol.model.vertex.base.JSONResponse
@@ -70,7 +69,7 @@ class UnitOrganizationMapper (val properties: Map<String, String>): IMapper {
         return SUCCESSResponse(data = this.unitOrganization)
     }
 
-    override fun createEdge(target: VertexInfo): JSONResponse {
+    override fun createEdge(target: VertexInfo, edgeLabel: String?): JSONResponse {
         if (UnitOrganizationValidator().isCorrectVertexTarget(target)) {
             return FAILResponse(data = "@UOCEE-001 Impossible create this edge $target from UnitOrganization")
         }

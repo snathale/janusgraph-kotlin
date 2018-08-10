@@ -3,12 +3,20 @@ package br.com.ntopus.accesscontrol.model.vertex.validator
 import br.com.ntopus.accesscontrol.model.data.Property
 import br.com.ntopus.accesscontrol.model.data.PropertyLabel
 import br.com.ntopus.accesscontrol.model.data.VertexLabel
-import br.com.ntopus.accesscontrol.model.interfaces.VertexInfo
+import br.com.ntopus.accesscontrol.model.vertex.base.ICommon
+import br.com.ntopus.accesscontrol.model.vertex.mapper.VertexInfo
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal
 import org.apache.tinkerpop.gremlin.structure.Vertex
 import org.janusgraph.core.ConfiguredGraphFactory
 
 class AccessRuleValidator: DefaultValidator() {
+
+    override fun canInsertVertex(vertex: ICommon): Boolean {
+        if (vertex.code.isEmpty()) {
+            return false
+        }
+        return true
+    }
 
     override fun hasVertexTarget(target: VertexInfo): GraphTraversal<Vertex, Vertex>? {
         ConfiguredGraphFactory.create("")

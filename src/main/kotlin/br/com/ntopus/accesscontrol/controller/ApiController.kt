@@ -2,17 +2,17 @@ package br.com.ntopus.accesscontrol.controller
 
 import br.com.ntopus.accesscontrol.factory.MapperFactory
 import br.com.ntopus.accesscontrol.model.GraphFactory
-import br.com.ntopus.accesscontrol.model.data.EdgeData
 import br.com.ntopus.accesscontrol.model.data.Property
 import br.com.ntopus.accesscontrol.model.data.PropertyLabel
 import br.com.ntopus.accesscontrol.model.data.VertexData
-import br.com.ntopus.accesscontrol.model.interfaces.VertexInfo
 import br.com.ntopus.accesscontrol.model.vertex.base.ERRORResponse
+import br.com.ntopus.accesscontrol.model.vertex.mapper.VertexInfo
+import com.google.gson.Gson
 import org.apache.tinkerpop.gremlin.structure.Vertex
 import org.springframework.web.bind.annotation.*
 import com.google.gson.GsonBuilder
 
-
+data class EdgeContext(val source: VertexInfo, val target: VertexInfo, val edgeLabel: String? = "")
 @RestController
 @RequestMapping("api/v1")
 class ApiController {
@@ -22,22 +22,21 @@ class ApiController {
     fun addVertex(@RequestBody vertex: VertexData): String {
         val gson = GsonBuilder().setPrettyPrinting().create()
         return try {
-            val t = MapperFactory.createFactory(vertex).insert()
-            gson.toJson(t)
+            return  gson.toJson(MapperFactory.createFactory(vertex).insert())
         } catch (e: Exception) {
-            gson.toJson(ERRORResponse(message = "@ACIE-001 Impossible create a Vertex with this label"))
+            gson.toJson(ERRORResponse(message = "@ACIE-001 Impossible create a Vertex ${e.message}"))
         }
     }
 
     @PostMapping("/addEdge")
-    fun addEdge(@RequestBody source: VertexInfo, @RequestBody target: VertexInfo): String {
-        val gson = GsonBuilder().setPrettyPrinting().create()
-        val vertex = VertexData(source.label, listOf(Property(PropertyLabel.CODE.label, source.code)))
+    fun addEdge(@RequestBody params: EdgeContext): String {
+        var gson = Gson()
+        val vertex = VertexData(params.source.label, listOf(Property(PropertyLabel.CODE.label, params.source.code)))
         return try {
-            val t = MapperFactory.createFactory(vertex).createEdge(target)
-            gson.toJson(t)
+            gson = GsonBuilder().serializeNulls().create()
+            return  gson.toJson(MapperFactory.createFactory(vertex).createEdge(params.target, params.edgeLabel))
         } catch (e: Exception) {
-            gson.toJson(ERRORResponse(message = "@ACIE-001 Impossible create a Edge between $source and $target"))
+            gson.toJson(ERRORResponse(message = "@ACIE-001 Impossible create a Edge ${e.message}"))
         }
     }
 

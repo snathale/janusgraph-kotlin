@@ -2,12 +2,14 @@ package br.com.ntopus.accesscontrol.model.vertex
 
 import br.com.ntopus.accesscontrol.model.data.PropertyLabel
 import br.com.ntopus.accesscontrol.model.data.VertexLabel
-import br.com.ntopus.accesscontrol.model.interfaces.VertexInfo
 import br.com.ntopus.accesscontrol.model.vertex.base.*
+import com.google.gson.annotations.SerializedName
 import java.util.*
 
 class AccessRule(properties: Map<String, String>): ICommon(properties) {
 
+    @SerializedName("expirationDate")
+    val expirationDate: Date = Date(properties["expirationDate"].toString())
 //    companion object: ICommon {
 //        override fun findByCode(code: String): ICommon {
 //            val g = GraphFactory.open().traversal()
@@ -24,8 +26,6 @@ class AccessRule(properties: Map<String, String>): ICommon(properties) {
 //            return accessRule
 //        }
 //    }
-
-    val expirationDate: Date = Date(properties["expirationDate"].toString())
 
 
 }

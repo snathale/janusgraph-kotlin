@@ -3,7 +3,7 @@ package br.com.ntopus.accesscontrol.model.vertex.validator
 import br.com.ntopus.accesscontrol.model.data.Property
 import br.com.ntopus.accesscontrol.model.data.PropertyLabel
 import br.com.ntopus.accesscontrol.model.data.VertexLabel
-import br.com.ntopus.accesscontrol.model.interfaces.VertexInfo
+import br.com.ntopus.accesscontrol.model.vertex.mapper.VertexInfo
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal
 import org.apache.tinkerpop.gremlin.structure.Vertex
 

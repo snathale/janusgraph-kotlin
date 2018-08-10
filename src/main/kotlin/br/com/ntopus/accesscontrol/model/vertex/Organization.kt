@@ -2,8 +2,6 @@ package br.com.ntopus.accesscontrol.model.vertex
 
 import br.com.ntopus.accesscontrol.model.GraphFactory
 import br.com.ntopus.accesscontrol.model.data.*
-import br.com.ntopus.accesscontrol.model.interfaces.Relationship
-import br.com.ntopus.accesscontrol.model.interfaces.VertexInfo
 import br.com.ntopus.accesscontrol.model.vertex.base.*
 import org.apache.tinkerpop.gremlin.structure.Vertex
 import java.time.LocalDate

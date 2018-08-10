@@ -5,7 +5,6 @@ import br.com.ntopus.accesscontrol.model.data.EdgeLabel
 import br.com.ntopus.accesscontrol.model.data.Property
 import br.com.ntopus.accesscontrol.model.data.PropertyLabel
 import br.com.ntopus.accesscontrol.model.data.VertexLabel
-import br.com.ntopus.accesscontrol.model.interfaces.VertexInfo
 import br.com.ntopus.accesscontrol.model.vertex.AccessGroup
 import br.com.ntopus.accesscontrol.model.vertex.base.FAILResponse
 import br.com.ntopus.accesscontrol.model.vertex.base.JSONResponse
@@ -57,7 +56,7 @@ class AccessGroupMapper(val properties: Map<String, String>) : IMapper {
         return SUCCESSResponse(data = this.accessGroup)
     }
 
-    override fun createEdge(target: VertexInfo): JSONResponse {
+    override fun createEdge(target: VertexInfo, edgeLabel: String?): JSONResponse {
         if (!AccessGroupValidator().isCorrectVertexTarget(target)) {
             return FAILResponse(data = "@AGCEE-001 Impossible create this edge $target from Access Group")
         }
@@ -66,7 +65,7 @@ class AccessGroupMapper(val properties: Map<String, String>) : IMapper {
                 ?: return FAILResponse(data = "@AGCEE-002 Impossible find Access Group ${this.accessGroup}")
         val vTarget = AccessGroupValidator().hasVertexTarget(target)
                 ?: return FAILResponse(data = "@AGCEE-003 Impossible find ${target.label.capitalize()} $target")
-        return when(target.edgeLabel) {
+        return when(edgeLabel) {
             EdgeLabel.ADD.label -> this.createAddEdgeFromRule(accessGroup, vTarget, target)
             EdgeLabel.REMOVE.label -> this.createRemoveEdgeFromRule(accessGroup, vTarget, target)
             EdgeLabel.INHERIT.label -> this.createInheritEdgeFromAccessGroup(accessGroup, vTarget, target)

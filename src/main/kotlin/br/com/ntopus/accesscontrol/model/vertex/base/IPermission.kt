@@ -9,5 +9,8 @@ abstract class IPermission(properties: Map<String, String>): ICommon(properties)
     var creationDate: Date = Date()
 
     @SerializedName("description")
-    var description: String = properties["description"].toString()
+    var description: String = this.toString(properties["description"])
+
+    @SerializedName("name")
+    var name: String = this.toString(properties["name"])
 }

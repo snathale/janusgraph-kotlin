@@ -9,5 +9,8 @@ abstract class ICommonAgent(properties: Map<String, String>): ICommon(properties
     var creationDate: Date = Date()
 
     @SerializedName("observation")
-    var observation: String = properties["observation"].toString()
+    var observation: String = this.toString(properties["observation"])
+
+    @SerializedName("name")
+    var name: String = this.toString(properties["name"])
 }

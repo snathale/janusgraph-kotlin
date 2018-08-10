@@ -5,7 +5,6 @@ import br.com.ntopus.accesscontrol.model.data.EdgeLabel
 import br.com.ntopus.accesscontrol.model.data.Property
 import br.com.ntopus.accesscontrol.model.data.PropertyLabel
 import br.com.ntopus.accesscontrol.model.data.VertexLabel
-import br.com.ntopus.accesscontrol.model.interfaces.VertexInfo
 import br.com.ntopus.accesscontrol.model.vertex.AccessRule
 import br.com.ntopus.accesscontrol.model.vertex.base.FAILResponse
 import br.com.ntopus.accesscontrol.model.vertex.base.JSONResponse
@@ -24,9 +23,9 @@ class AccessRuleMapper (val properties: Map<String, String>): IMapper {
         }
         try {
             val g = graph.traversal()
-            val user = g.V().hasLabel(VertexLabel.ACCESS_RULE.label)
+            val accessRule = g.V().hasLabel(VertexLabel.ACCESS_RULE.label)
             for (property in properties) {
-                user.property(property.name, property.value).next()
+                accessRule.property(property.name, property.value).next()
             }
             graph.tx().commit()
         } catch (e: Exception) {
@@ -67,7 +66,7 @@ class AccessRuleMapper (val properties: Map<String, String>): IMapper {
         return SUCCESSResponse(data = this.accessRule)
     }
 
-    override fun createEdge(target: VertexInfo): JSONResponse {
+    override fun createEdge(target: VertexInfo, edgeLabel: String?): JSONResponse {
         if (!AccessRuleValidator().isCorrectVertexTarget(target)) {
             return FAILResponse(data = "@ARCEE-001 Impossible create this edge $target from Access Rule")
         }
@@ -76,7 +75,7 @@ class AccessRuleMapper (val properties: Map<String, String>): IMapper {
                 ?: return FAILResponse(data = "@ARCEE-002 Impossible find Access Rule ${this.accessRule}")
         val vTarget = AccessRuleValidator().hasVertexTarget(target)
                 ?: return FAILResponse(data = "@ARCEE-003 Impossible find ${target.label.capitalize()} $target")
-        return when(target.edgeLabel) {
+        return when(edgeLabel) {
             EdgeLabel.PROVIDE.label -> this.createProvideEdge(accessGroup, vTarget, target)
             EdgeLabel.OWN.label -> this.createOwnEdgeFromAccess(accessGroup, vTarget, target)
             else -> FAILResponse(data = "@ARCEE-006 Impossible create a edge from ${this.accessRule}")
