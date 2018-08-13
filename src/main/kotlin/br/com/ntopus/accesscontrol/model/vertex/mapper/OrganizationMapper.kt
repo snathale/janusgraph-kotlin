@@ -33,12 +33,12 @@ class OrganizationMapper (val properties: Map<String, String>): IMapper {
         return SUCCESSResponse(data = this.organization)
     }
 
-    override fun delete(vertex: VertexInfo): JSONResponse {
+    override fun delete(): JSONResponse {
         val organization = OrganizationValidator()
                 .hasVertex(VertexInfo(VertexLabel.USER.label, this.organization.code))
                 ?: return FAILResponse(data = "@ODE-001 Impossible find Organization ${this.organization}")
         try {
-            organization.property(PropertyLabel.ENABLE, false)
+            organization.property(PropertyLabel.ENABLE.label, false)
             graph.tx().commit()
         } catch (e: Exception) {
             graph.tx().rollback()
@@ -80,7 +80,7 @@ class OrganizationMapper (val properties: Map<String, String>): IMapper {
                 ?: return FAILResponse(data = "@OCEE-003 Impossible find this Unit Organization $target")
 
         try {
-            organization.addE(EdgeLabel.HAS.label).to(unitOrganization).next()
+//            organization.addE(EdgeLabel.HAS.label).to(unitOrganization).next()
             graph.tx().commit()
         } catch (e: Exception) {
             graph.tx().rollback()

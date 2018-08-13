@@ -32,12 +32,12 @@ class GroupMapper (val properties: Map<String, String>): IMapper {
         return SUCCESSResponse(data = this.group)
     }
 
-    override fun delete(vertex: VertexInfo): JSONResponse {
+    override fun delete(): JSONResponse {
         val group = GroupValidator()
                 .hasVertex(VertexInfo(VertexLabel.USER.label, this.group.code))
                 ?: return FAILResponse(data = "@GDE-001 Impossible find Group ${this.group}")
         try {
-            group.property(PropertyLabel.ENABLE, false).next()
+            group.property(PropertyLabel.ENABLE.label, false)
             graph.tx().commit()
         } catch (e: Exception) {
             graph.tx().rollback()

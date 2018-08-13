@@ -21,12 +21,12 @@ class AccessGroupMapper(val properties: Map<String, String>) : IMapper {
         return FAILResponse(data = "@AGUPE-001 Impossible update proprieties from this vertex")
     }
 
-    override fun delete(vertex: VertexInfo): JSONResponse {
+    override fun delete(): JSONResponse {
         val user = AccessGroupValidator()
                 .hasVertex(VertexInfo(VertexLabel.ACCESS_GROUP.label, this.accessGroup.code))
                 ?: return FAILResponse(data = "@AGDE-001 Impossible find Access Group ${this.accessGroup}")
         try {
-            user.property(PropertyLabel.ENABLE, false)
+            user.property(PropertyLabel.ENABLE.label, false)
             graph.tx().commit()
         } catch (e: Exception) {
             graph.tx().rollback()
@@ -66,9 +66,9 @@ class AccessGroupMapper(val properties: Map<String, String>) : IMapper {
         val vTarget = AccessGroupValidator().hasVertexTarget(target)
                 ?: return FAILResponse(data = "@AGCEE-003 Impossible find ${target.label.capitalize()} $target")
         return when(edgeLabel) {
-            EdgeLabel.ADD.label -> this.createAddEdgeFromRule(accessGroup, vTarget, target)
-            EdgeLabel.REMOVE.label -> this.createRemoveEdgeFromRule(accessGroup, vTarget, target)
-            EdgeLabel.INHERIT.label -> this.createInheritEdgeFromAccessGroup(accessGroup, vTarget, target)
+//            EdgeLabel.ADD.label -> this.createAddEdgeFromRule(accessGroup, vTarget, target)
+//            EdgeLabel.REMOVE.label -> this.createRemoveEdgeFromRule(accessGroup, vTarget, target)
+//            EdgeLabel.INHERIT.label -> this.createInheritEdgeFromAccessGroup(accessGroup, vTarget, target)
             else -> FAILResponse(data = "@AGCEE-006 Impossible create a edge from ${this.accessGroup}")
         }
     }

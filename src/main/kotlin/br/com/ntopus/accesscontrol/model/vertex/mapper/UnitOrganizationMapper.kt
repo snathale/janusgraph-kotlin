@@ -35,12 +35,12 @@ class UnitOrganizationMapper (val properties: Map<String, String>): IMapper {
         return SUCCESSResponse(data = this.unitOrganization)
     }
 
-    override fun delete(vertex: VertexInfo): JSONResponse {
+    override fun delete(): JSONResponse {
         val unitOrganization = UnitOrganizationValidator()
                 .hasVertex(VertexInfo(VertexLabel.UNIT_ORGANIZATION.label, this.unitOrganization.code))
                 ?: return FAILResponse(data = "@UODE-001 Impossible find Unit Organization ${this.unitOrganization}")
         try {
-            unitOrganization.property(PropertyLabel.ENABLE, false)
+            unitOrganization.property(PropertyLabel.ENABLE.label, false)
             graph.tx().commit()
         } catch (e: Exception) {
             graph.tx().rollback()
@@ -81,7 +81,7 @@ class UnitOrganizationMapper (val properties: Map<String, String>): IMapper {
         val group = UnitOrganizationValidator().hasVertexTarget(target)
                 ?: return FAILResponse(data = "@UOCEE-003 Impossible find Group $target")
         try {
-            unitOrganization.addE(EdgeLabel.HAS.label).to(group).next()
+//            unitOrganization.addEdge(EdgeLabel.HAS.label).to(group)
             graph.tx().commit()
         } catch (e: Exception) {
             graph.tx().rollback()

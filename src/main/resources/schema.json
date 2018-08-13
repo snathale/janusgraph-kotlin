@@ -57,11 +57,16 @@
       "composite": true,
       "unique": true,
       "indexOnly": "accessGroup"},
-    {"name": "vByAssociationExpirationDate",
+    {"name": "vByAccessRuleExpirationDate",
       "propertyKeys": ["expirationDate"],
       "composite": true,
       "unique": false,
-      "indexOnly": "associtation"}
+      "indexOnly": "accessRule"},
+    {"name": "vByAccessRuleCode",
+      "propertyKeys": ["code"],
+      "composite": true,
+      "unique": false,
+      "indexOnly": "accessRule"}
   ],
   "edgeIndexes": [
     {"name": "eByIdAdd",

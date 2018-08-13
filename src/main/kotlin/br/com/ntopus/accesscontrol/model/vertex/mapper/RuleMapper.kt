@@ -36,12 +36,12 @@ class RuleMapper (val properties: Map<String, String>): IMapper {
         return SUCCESSResponse(data = this.rule)
     }
 
-    override fun delete(vertex: VertexInfo): JSONResponse {
+    override fun delete(): JSONResponse {
         val rule = RuleValidator()
                 .hasVertex(VertexInfo(VertexLabel.RULE.label, this.rule.code))
                 ?: return FAILResponse(data = "@RDE-001 Impossible find Rule ${this.rule}")
         try {
-            rule.property(PropertyLabel.ENABLE, false)
+            rule.property(PropertyLabel.ENABLE.label, false)
             graph.tx().commit()
         } catch (e: Exception) {
             graph.tx().rollback()

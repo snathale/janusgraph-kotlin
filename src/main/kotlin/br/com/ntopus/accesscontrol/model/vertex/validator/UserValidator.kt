@@ -8,17 +8,27 @@ import br.com.ntopus.accesscontrol.model.vertex.mapper.VertexInfo
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal
 import org.apache.tinkerpop.gremlin.structure.Vertex
 
-class UserValidator: DefaultValidator() {
+class UserValidator : DefaultValidator() {
 
-    override fun hasVertexTarget(target: VertexInfo): GraphTraversal<Vertex, Vertex>? {
+    override fun hasVertexTarget(target: VertexInfo): Vertex? {
         val graph = GraphFactory.open()
-        val g = graph.traversal()
-        return g.V().hasLabel(VertexLabel.ACCESS_RULE.label).has(PropertyLabel.CODE.label, target.code)
+        return try {
+            val g = graph.traversal()
+            g.V().hasLabel(VertexLabel.ACCESS_RULE.label).has(PropertyLabel.CODE.label, target.code).next()
+        } catch (e: Exception) {
+            null
+        }
+
     }
 
-    override fun hasVertex(source: VertexInfo): GraphTraversal<Vertex, Vertex>? {
+    override fun hasVertex(source: VertexInfo): Vertex? {
         val g = graph.traversal()
-        return g.V().hasLabel(VertexLabel.USER.label).has(PropertyLabel.CODE.label, source.code)
+        return try {
+            g.V().hasLabel(VertexLabel.USER.label).has(PropertyLabel.CODE.label, source.code).next()
+        }
+        catch (e: Exception) {
+            null
+        }
     }
 
     override fun isCorrectVertexTarget(target: VertexInfo): Boolean {
@@ -31,14 +41,10 @@ class UserValidator: DefaultValidator() {
     }
 
     override fun canUpdateVertexProperty(properties: List<Property>): Boolean {
-        val iterator = properties.iterator()
-        while (iterator.hasNext()) {
-            when((iterator as Property).name) {
-                "name" -> iterator.next()
-                "observation" -> iterator.next()
-                "enable" -> iterator.next()
-                else -> return false
-            }
+        for (value in properties) {
+            if (value.name != PropertyLabel.NAME.label
+                    && value.name != PropertyLabel.OBSERVATION.label
+                    && value.name != PropertyLabel.ENABLE.label) return false
         }
         return true
     }

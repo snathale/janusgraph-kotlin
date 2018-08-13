@@ -9,8 +9,8 @@ import org.apache.tinkerpop.gremlin.structure.Vertex
 interface IValidator {
     fun canInsertVertex(vertex: ICommon): Boolean
     fun canUpdateVertexProperty(properties: List<Property>): Boolean
-    fun hasVertexTarget(target: VertexInfo): GraphTraversal<Vertex, Vertex>?
-    fun hasVertex(source: VertexInfo): GraphTraversal<Vertex, Vertex>?
+    fun hasVertexTarget(target: VertexInfo): Vertex?
+    fun hasVertex(source: VertexInfo): Vertex?
     fun isCorrectVertexTarget(target: VertexInfo): Boolean
     fun hasProperty(vertex: VertexInfo, property: Property): Boolean
 }

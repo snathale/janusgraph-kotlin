@@ -18,5 +18,5 @@ interface IMapper {
     fun insert (): JSONResponse
     fun updateProperty (properties: List<Property>): JSONResponse
     fun createEdge(target: VertexInfo, edgeLabel: String? = ""): JSONResponse
-    fun delete (vertex: VertexInfo): JSONResponse
+    fun delete (): JSONResponse
 }

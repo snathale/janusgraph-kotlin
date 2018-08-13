@@ -9,20 +9,20 @@ import org.apache.tinkerpop.gremlin.structure.Vertex
 
 class AccessGroupValidator: DefaultValidator() {
 
-    override fun hasVertexTarget(target: VertexInfo): GraphTraversal<Vertex, Vertex>? {
+    override fun hasVertexTarget(target: VertexInfo): Vertex? {
         val g = graph.traversal()
         return when(target.label) {
             VertexLabel.ACCESS_GROUP.label -> g.V().hasLabel(VertexLabel.ACCESS_GROUP.label)
-                    .has(PropertyLabel.CODE.label, target.code)
+                    .has(PropertyLabel.CODE.label, target.code).next()
             VertexLabel.RULE.label -> g.V().hasLabel(VertexLabel.RULE.label)
-                    .has(PropertyLabel.CODE.label, target.code)
+                    .has(PropertyLabel.CODE.label, target.code).next()
             else -> null
         }
     }
 
-    override fun hasVertex(source: VertexInfo): GraphTraversal<Vertex, Vertex>? {
+    override fun hasVertex(source: VertexInfo): Vertex? {
         val g = graph.traversal()
-        return g.V().hasLabel(VertexLabel.ACCESS_GROUP.label).has(PropertyLabel.CODE.label, source.code)
+        return g.V().hasLabel(VertexLabel.ACCESS_GROUP.label).has(PropertyLabel.CODE.label, source.code).next()
     }
 
     override fun isCorrectVertexTarget(target: VertexInfo): Boolean {

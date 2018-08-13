@@ -35,12 +35,12 @@ class AccessRuleMapper (val properties: Map<String, String>): IMapper {
         return SUCCESSResponse(data = this.accessRule)
     }
 
-    override fun delete(vertex: VertexInfo): JSONResponse {
+    override fun delete(): JSONResponse {
         val accessRule = AccessRuleValidator()
                 .hasVertex(VertexInfo(VertexLabel.ACCESS_RULE.label, this.accessRule.code))
                 ?: return FAILResponse(data = "@ARDE-001 Impossible find Access Rule ${this.accessRule}")
         try {
-            accessRule.property(PropertyLabel.ENABLE, false)
+            accessRule.property(PropertyLabel.ENABLE.label, false)
             graph.tx().commit()
         } catch (e: Exception) {
             graph.tx().rollback()
@@ -76,8 +76,8 @@ class AccessRuleMapper (val properties: Map<String, String>): IMapper {
         val vTarget = AccessRuleValidator().hasVertexTarget(target)
                 ?: return FAILResponse(data = "@ARCEE-003 Impossible find ${target.label.capitalize()} $target")
         return when(edgeLabel) {
-            EdgeLabel.PROVIDE.label -> this.createProvideEdge(accessGroup, vTarget, target)
-            EdgeLabel.OWN.label -> this.createOwnEdgeFromAccess(accessGroup, vTarget, target)
+//            EdgeLabel.PROVIDE.label -> this.createProvideEdge(accessGroup, vTarget, target)
+//            EdgeLabel.OWN.label -> this.createOwnEdgeFromAccess(accessGroup, vTarget, target)
             else -> FAILResponse(data = "@ARCEE-006 Impossible create a edge from ${this.accessRule}")
         }
     }

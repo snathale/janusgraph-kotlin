@@ -45,16 +45,13 @@ class UserMapper (val properties: Map<String, String>): IMapper {
         if (!UserValidator().isCorrectVertexTarget(target)) {
             return FAILResponse(data = "@UCEE-001 Impossible create this edge $target from User")
         }
-        val user = UserValidator()
-                .hasVertex(VertexInfo(VertexLabel.USER.label, this.user.code))
-                ?: return FAILResponse(data = "@UCEE-002 Impossible find User ${this.user}")
-        if (UserValidator().hasVertexTarget(target) != null) {
-            val t = "null"
-        }
-        val accessRule = (UserValidator().hasVertexTarget(target))
-                ?: return FAILResponse(data ="@UCEE-003 Impossible find Access Rule $target")
+        val userStorage = UserValidator().hasVertex(VertexInfo(VertexLabel.USER.label, this.user.code))
+                ?: return FAILResponse(data = "@UCEE-002 Impossible find User with code ${this.user.code}")
+
+        val accessRuleStorage = UserValidator().hasVertexTarget(target)
+                ?: return FAILResponse(data ="@UCEE-003 Impossible find Access Rule with code ${target.code}")
         try {
-            user.addE(EdgeLabel.ASSOCIATED.label).to(accessRule).next()
+            userStorage.addEdge(EdgeLabel.ASSOCIATED.label, accessRuleStorage)
             graph.tx().commit()
         } catch (e: Exception) {
             graph.tx().rollback()
@@ -65,49 +62,42 @@ class UserMapper (val properties: Map<String, String>): IMapper {
     }
 
     override fun updateProperty(properties: List<Property>): JSONResponse {
+        val user = UserValidator()
+                .hasVertex(VertexInfo(VertexLabel.USER.label, this.user.code))
+                ?: return FAILResponse(data = "@UUPE-001 Impossible find User with code ${this.user.code}")
+
         if (!UserValidator().canUpdateVertexProperty(properties)) {
-            return FAILResponse(data = "@UUPE-001 User not have this properties $properties")
+            return FAILResponse(data = "@UUPE-002 User property can be updated")
         }
+        var values: Map<String, String> = mapOf()
+        val g = graph.traversal()
         try {
-            val g = graph.traversal()
-            val user = g.V().hasLabel(VertexLabel.USER.label)
             for (property in properties) {
-                user.property(property.name, property.value).next()
+                user.property(property.name, property.value)
             }
             graph.tx().commit()
         } catch (e: Exception) {
             graph.tx().rollback()
             return FAILResponse(data = "@UUPE-002 ${e.message.toString()}")
         }
-        return SUCCESSResponse(data = this.user)
+        val traversal = g.V().hasLabel(VertexLabel.USER.label).has(PropertyLabel.CODE.label, this.user.code)
+        values = AbstractMapper.parseMapVertex(traversal)
+        val localUser = LocalUser(
+                this.user.code,
+                AbstractMapper.parseMapValue(values[PropertyLabel.NAME.label].toString()),
+                AbstractMapper.formatDate(values[PropertyLabel.CREATION_DATE.label].toString()),
+                AbstractMapper.parseMapValue(values[PropertyLabel.ENABLE.label].toString()).toBoolean(),
+                AbstractMapper.parseMapValue((values[PropertyLabel.OBSERVATION.label].toString()))
+        )
+        return SUCCESSResponse(data = localUser)
     }
 
-//    override fun createEdge(target: VertexInfo, edgeLabel: String?): JSONResponse {
-//        if (!UserValidator().isCorrectVertexTarget(target)) {
-//            return FAILResponse(data = "@UCEE-001 Impossible create this edge $target from User")
-//        }
-//        val user = UserValidator()
-//                .hasVertex(VertexInfo(VertexLabel.USER.label, this.user.code))
-//                ?: return FAILResponse(data = "@UCEE-002 Impossible find User ${this.user}")
-//        val accessRule = UserValidator().hasVertexTarget(target)
-//                ?: return FAILResponse(data ="@UCEE-003 Impossible find Access Rule $target")
-//        try {
-//            user.addE(EdgeLabel.ASSOCIATED.label).to(accessRule).next()
-//            graph.tx().commit()
-//        } catch (e: Exception) {
-//            graph.tx().rollback()
-//            return FAILResponse(data = "@UCEE-003 ${e.message.toString()}")
-//        }
-//        val localEdge = EdgeCreated(VertexInfo(VertexLabel.USER.label, this.user.code), target, EdgeLabel.ASSOCIATED.label)
-//        return SUCCESSResponse(data = localEdge)
-//    }
-
-    override fun delete(vertex: VertexInfo): JSONResponse {
+    override fun delete(): JSONResponse {
         val user = UserValidator()
                 .hasVertex(VertexInfo(VertexLabel.USER.label, this.user.code))
-                ?: return FAILResponse(data = "@UDE-001 Impossible find User ${this.user}")
+                ?: return FAILResponse(data = "@UDE-001 Impossible find User with code ${this.user.code}")
         try {
-            user.property(PropertyLabel.ENABLE, false)
+            user.property(PropertyLabel.ENABLE.label, false)
             graph.tx().commit()
         } catch (e: Exception) {
             graph.tx().rollback()

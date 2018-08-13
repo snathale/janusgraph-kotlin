@@ -10,6 +10,9 @@ import org.apache.tinkerpop.gremlin.structure.Vertex
 import org.janusgraph.core.ConfiguredGraphFactory
 
 class AccessRuleValidator: DefaultValidator() {
+    override fun hasVertex(source: VertexInfo): Vertex? {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
 
     override fun canInsertVertex(vertex: ICommon): Boolean {
         if (vertex.code.isEmpty()) {
@@ -18,26 +21,26 @@ class AccessRuleValidator: DefaultValidator() {
         return true
     }
 
-    override fun hasVertexTarget(target: VertexInfo): GraphTraversal<Vertex, Vertex>? {
-        ConfiguredGraphFactory.create("")
-        val g = graph.traversal()
-        return when(target.label) {
-            VertexLabel.ACCESS_GROUP.label -> g.V().hasLabel(VertexLabel.ACCESS_GROUP.label)
-                    .has(PropertyLabel.CODE.label, target.code)
-            VertexLabel.GROUP.label -> g.V().hasLabel(VertexLabel.GROUP.label)
-                    .has(PropertyLabel.CODE.label, target.code)
-            VertexLabel.UNIT_ORGANIZATION.label -> g.V().hasLabel(VertexLabel.UNIT_ORGANIZATION.label)
-                    .has(PropertyLabel.CODE.label, target.code)
-            VertexLabel.ORGANIZATION.label -> g.V().hasLabel(VertexLabel.ORGANIZATION.label)
-                    .has(PropertyLabel.CODE.label, target.code)
-            else -> null
-        }
-    }
+//    override fun hasVertexTarget(target: VertexInfo): GraphTraversal<Vertex, Vertex>? {
+//        ConfiguredGraphFactory.create("")
+//        val g = graph.traversal()
+//        return when(target.label) {
+//            VertexLabel.ACCESS_GROUP.label -> g.V().hasLabel(VertexLabel.ACCESS_GROUP.label)
+//                    .has(PropertyLabel.CODE.label, target.code)
+//            VertexLabel.GROUP.label -> g.V().hasLabel(VertexLabel.GROUP.label)
+//                    .has(PropertyLabel.CODE.label, target.code)
+//            VertexLabel.UNIT_ORGANIZATION.label -> g.V().hasLabel(VertexLabel.UNIT_ORGANIZATION.label)
+//                    .has(PropertyLabel.CODE.label, target.code)
+//            VertexLabel.ORGANIZATION.label -> g.V().hasLabel(VertexLabel.ORGANIZATION.label)
+//                    .has(PropertyLabel.CODE.label, target.code)
+//            else -> null
+//        }
+//    }
 
-    override fun hasVertex(source: VertexInfo): GraphTraversal<Vertex, Vertex>? {
-        val g = graph.traversal()
-        return g.V().hasLabel(VertexLabel.ACCESS_RULE.label).has(PropertyLabel.CODE.label, source.code)
-    }
+//    override fun hasVertex(source: VertexInfo): GraphTraversal<Vertex, Vertex>? {
+//        val g = graph.traversal()
+//        return g.V().hasLabel(VertexLabel.ACCESS_RULE.label).has(PropertyLabel.CODE.label, source.code)
+//    }
 
     override fun isCorrectVertexTarget(target: VertexInfo): Boolean {
         val g = graph.traversal()

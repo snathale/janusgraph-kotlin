@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*
 import com.google.gson.GsonBuilder
 
 data class EdgeContext(val source: VertexInfo, val target: VertexInfo, val edgeLabel: String? = "")
+data class PropertyContext(val vertex: VertexInfo, val properties: List<Property>)
 @RestController
 @RequestMapping("api/v1")
 class ApiController {
@@ -20,8 +21,9 @@ class ApiController {
     val graph = GraphFactory.open()
     @PostMapping("/addVertex")
     fun addVertex(@RequestBody vertex: VertexData): String {
-        val gson = GsonBuilder().setPrettyPrinting().create()
+        var gson = Gson()
         return try {
+            gson = GsonBuilder().serializeNulls().create()
             return  gson.toJson(MapperFactory.createFactory(vertex).insert())
         } catch (e: Exception) {
             gson.toJson(ERRORResponse(message = "@ACIE-001 Impossible create a Vertex ${e.message}"))
@@ -37,6 +39,30 @@ class ApiController {
             return  gson.toJson(MapperFactory.createFactory(vertex).createEdge(params.target, params.edgeLabel))
         } catch (e: Exception) {
             gson.toJson(ERRORResponse(message = "@ACIE-001 Impossible create a Edge ${e.message}"))
+        }
+    }
+
+    @PutMapping("/updateVertexProperty/{code}")
+    fun updateVertexProperty(@RequestBody params: PropertyContext): String {
+        var gson = Gson()
+        val vertex = VertexData(params.vertex.label, listOf(Property(PropertyLabel.CODE.label, params.vertex.code)))
+        return try {
+            gson = GsonBuilder().serializeNulls().create()
+            return  gson.toJson(MapperFactory.createFactory(vertex).updateProperty(params.properties))
+        } catch (e: Exception) {
+            gson.toJson(ERRORResponse(message = "@ACUPV-001 Impossible update Vertex Property ${e.message}"))
+        }
+    }
+
+    @DeleteMapping("/deleteVertex/{code}")
+    fun deleteVertex(@PathVariable code: String, @RequestBody vertex: String): String {
+        var gson = Gson()
+        val vertexData = VertexData(vertex, listOf(Property(PropertyLabel.CODE.label, code)))
+        return try {
+            gson = GsonBuilder().serializeNulls().create()
+            return  gson.toJson(MapperFactory.createFactory(vertexData).delete())
+        } catch (e: Exception) {
+            gson.toJson(ERRORResponse(message = "@ACDV-001 Impossible delete Vertex Property ${e.message}"))
         }
     }
 

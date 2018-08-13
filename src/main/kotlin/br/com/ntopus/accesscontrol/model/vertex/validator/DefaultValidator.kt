@@ -10,7 +10,6 @@ import org.apache.tinkerpop.gremlin.structure.Vertex
 
 abstract class DefaultValidator: IValidator {
     val graph = GraphFactory.open()
-
     override fun canInsertVertex(vertex: ICommon): Boolean {
         if ((vertex as ICommonAgent).name.isEmpty() || vertex.code.isEmpty()) {
             return false
@@ -18,7 +17,7 @@ abstract class DefaultValidator: IValidator {
         return true
     }
 
-    override fun hasVertexTarget(target: VertexInfo): GraphTraversal<Vertex, Vertex>? {
+    override fun hasVertexTarget(target: VertexInfo): Vertex? {
         return null
     }
 
