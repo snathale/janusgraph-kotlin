@@ -10,7 +10,7 @@ import org.apache.tinkerpop.gremlin.structure.Vertex
 import org.janusgraph.core.ConfiguredGraphFactory
 
 class AccessRuleValidator: DefaultValidator() {
-    override fun hasVertex(source: VertexInfo): Vertex? {
+    override fun hasVertex(code: String): Vertex? {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
@@ -53,7 +53,7 @@ class AccessRuleValidator: DefaultValidator() {
         }
     }
 
-    override fun hasProperty(vertex: VertexInfo, property: Property): Boolean {
+    override fun hasProperty(code: String, property: Property): Boolean {
         val g = graph.traversal()
         return g.V().hasLabel(VertexLabel.ACCESS_RULE.label).has(property.name, property.value) != null
     }

@@ -8,33 +8,27 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal
 import org.apache.tinkerpop.gremlin.structure.Vertex
 
 class RuleValidator: DefaultValidator() {
-    override fun hasProperty(vertex: VertexInfo, property: Property): Boolean {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    override fun hasProperty(code: String, property: Property): Boolean {
+        val g = graph.traversal()
+        return g.V().hasLabel(VertexLabel.RULE.label).has(PropertyLabel.CODE.label, code)
+                .has(property.name, property.value).next() != null
     }
 
-    override fun hasVertex(source: VertexInfo): Vertex? {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    override fun hasVertex(code: String): Vertex? {
+        val g = graph.traversal()
+        return try {
+            g.V().hasLabel(VertexLabel.RULE.label).has(PropertyLabel.CODE.label, code).next()
+        }
+        catch (e: Exception) {
+            null
+        }
     }
-
-//    override fun hasVertex(source: VertexInfo): GraphTraversal<Vertex, Vertex>? {
-//        val g = graph.traversal()
-//        return g.V().hasLabel(VertexLabel.RULE.label).has(PropertyLabel.CODE.label, source.code)
-//    }
-//
-//    override fun hasProperty(vertex: VertexInfo, property: Property): Boolean {
-//        val g = graph.traversal()
-//        return g.V().hasLabel(VertexLabel.RULE.label).has(property.name, property.value) != null
-//    }
 
     override fun canUpdateVertexProperty(properties: List<Property>): Boolean {
-        val iterator = properties.iterator()
-        while (iterator.hasNext()) {
-            when((iterator as Property).name) {
-                PropertyLabel.NAME.label -> iterator.next()
-                PropertyLabel.DESCRIPTION.label -> iterator.next()
-                PropertyLabel.ENABLE.label -> iterator.next()
-                else -> return false
-            }
+        for (value in properties) {
+            if (value.name != PropertyLabel.NAME.label
+                    && value.name != PropertyLabel.DESCRIPTION.label
+                    && value.name != PropertyLabel.ENABLE.label) return false
         }
         return true
     }

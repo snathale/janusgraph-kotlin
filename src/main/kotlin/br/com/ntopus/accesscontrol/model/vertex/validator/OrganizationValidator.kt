@@ -8,38 +8,38 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal
 import org.apache.tinkerpop.gremlin.structure.Vertex
 
 class OrganizationValidator: DefaultValidator() {
-    override fun hasVertex(source: VertexInfo): Vertex? {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    override fun hasVertex(code: String): Vertex? {
+        return try {
+            graph.traversal().V().hasLabel(VertexLabel.ORGANIZATION.label).has(PropertyLabel.CODE.label, code).next()
+        } catch (e: Exception) {
+            null
+        }
+
     }
 
-//    override fun hasVertexTarget(target: VertexInfo): GraphTraversal<Vertex, Vertex>? {
-//        val g = graph.traversal()
-//        return g.V().hasLabel(VertexLabel.ORGANIZATION.label).has(PropertyLabel.CODE.label, target.code)
-//    }
-//
-//    override fun hasVertex(source: VertexInfo): GraphTraversal<Vertex, Vertex>? {
-//        val g = graph.traversal()
-//        return g.V().hasLabel(VertexLabel.ORGANIZATION.label).has(PropertyLabel.CODE.label, source.code)
-//    }
+    override fun hasVertexTarget(target: VertexInfo): Vertex? {
+        return try {
+            graph.traversal().V().hasLabel(VertexLabel.UNIT_ORGANIZATION.label).has(PropertyLabel.CODE.label, target.code).next()
+        } catch (e: Exception) {
+            null
+        }
+    }
 
     override fun isCorrectVertexTarget(target: VertexInfo): Boolean {
         return target.label.equals(VertexLabel.UNIT_ORGANIZATION.label)
     }
 
-    override fun hasProperty(vertex: VertexInfo, property: Property): Boolean {
+    override fun hasProperty(code: String, property: Property): Boolean {
         val g = graph.traversal()
-        return g.V().hasLabel(VertexLabel.ORGANIZATION.label).has(property.name, property.value) != null
+        return g.V().hasLabel(VertexLabel.ORGANIZATION.label).has(PropertyLabel.CODE.label, code)
+                .has(property.name, property.value) != null
     }
 
     override fun canUpdateVertexProperty(properties: List<Property>): Boolean {
-        val iterator = properties.iterator()
-        while (iterator.hasNext()) {
-            when((iterator as Property).name) {
-                PropertyLabel.NAME.label -> iterator.next()
-                PropertyLabel.OBSERVATION.label -> iterator.next()
-                PropertyLabel.ENABLE.label -> iterator.next()
-                else -> return false
-            }
+        for (value in properties) {
+            if (value.name != PropertyLabel.NAME.label
+                    && value.name != PropertyLabel.OBSERVATION.label
+                    && value.name != PropertyLabel.ENABLE.label) return false
         }
         return true
     }

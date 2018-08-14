@@ -23,7 +23,7 @@ class AccessGroupMapper(val properties: Map<String, String>) : IMapper {
 
     override fun delete(): JSONResponse {
         val user = AccessGroupValidator()
-                .hasVertex(VertexInfo(VertexLabel.ACCESS_GROUP.label, this.accessGroup.code))
+                .hasVertex(this.accessGroup.code)
                 ?: return FAILResponse(data = "@AGDE-001 Impossible find Access Group ${this.accessGroup}")
         try {
             user.property(PropertyLabel.ENABLE.label, false)
@@ -61,7 +61,7 @@ class AccessGroupMapper(val properties: Map<String, String>) : IMapper {
             return FAILResponse(data = "@AGCEE-001 Impossible create this edge $target from Access Group")
         }
         val accessGroup = AccessGroupValidator()
-                .hasVertex(VertexInfo(VertexLabel.ACCESS_GROUP.label, this.accessGroup.code))
+                .hasVertex(this.accessGroup.code)
                 ?: return FAILResponse(data = "@AGCEE-002 Impossible find Access Group ${this.accessGroup}")
         val vTarget = AccessGroupValidator().hasVertexTarget(target)
                 ?: return FAILResponse(data = "@AGCEE-003 Impossible find ${target.label.capitalize()} $target")

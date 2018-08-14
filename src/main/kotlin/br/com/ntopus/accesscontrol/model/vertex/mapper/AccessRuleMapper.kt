@@ -17,6 +17,27 @@ class AccessRuleMapper (val properties: Map<String, String>): IMapper {
     private val accessRule = AccessRule(properties)
     private val graph = GraphFactory.open()
 
+    override fun insert(): JSONResponse {
+        if (!AccessRuleValidator().canInsertVertex(this.accessRule)) {
+            return FAILResponse(data = "@ARCVE-001 Empty Access Rule properties")
+        }
+        try {
+            val accessRule = graph.addVertex(VertexLabel.ACCESS_RULE.label)
+            accessRule.property(PropertyLabel.CODE.label, this.accessRule.code)
+            accessRule.property(PropertyLabel.ENABLE.label, this.accessRule.enable)
+            accessRule.property(PropertyLabel.EXPIRATION_DATE.label, this.accessRule.expirationDate)
+            graph.tx().commit()
+        } catch (e: Exception) {
+            graph.tx().rollback()
+            return FAILResponse(data = "@ARCVE-002 ${e.message.toString()}")
+        }
+        val response = AssociationResponse(
+                this.accessRule.code,
+                this.accessRule.formatDate(),
+                this.accessRule.enable)
+        return SUCCESSResponse(data = response)
+    }
+
     override fun updateProperty(properties: List<Property>): JSONResponse {
         if (!AccessRuleValidator().canUpdateVertexProperty(properties)) {
             return FAILResponse(data = "@ARUPE-001 Access Rule not have this properties $properties")
@@ -37,7 +58,7 @@ class AccessRuleMapper (val properties: Map<String, String>): IMapper {
 
     override fun delete(): JSONResponse {
         val accessRule = AccessRuleValidator()
-                .hasVertex(VertexInfo(VertexLabel.ACCESS_RULE.label, this.accessRule.code))
+                .hasVertex(this.accessRule.code)
                 ?: return FAILResponse(data = "@ARDE-001 Impossible find Access Rule ${this.accessRule}")
         try {
             accessRule.property(PropertyLabel.ENABLE.label, false)
@@ -49,29 +70,12 @@ class AccessRuleMapper (val properties: Map<String, String>): IMapper {
         return SUCCESSResponse(data = null)
     }
 
-    override fun insert(): JSONResponse {
-        try {
-            if (!AccessRuleValidator().canInsertVertex(this.accessRule)) {
-                throw Exception("@ARCVE-001 Empty Access Rule properties")
-            }
-            val accessRule = graph.addVertex(VertexLabel.ACCESS_RULE)
-            accessRule.property(PropertyLabel.CODE.label, this.accessRule.code)
-            accessRule.property(PropertyLabel.ENABLE.label, this.accessRule.enable)
-            accessRule.property(PropertyLabel.EXPIRATION_DATE.label, this.accessRule.expirationDate)
-            graph.tx().commit()
-        } catch (e: Exception) {
-            graph.tx().rollback()
-            return FAILResponse(data = "@ARCVE-002 ${e.message.toString()}")
-        }
-        return SUCCESSResponse(data = this.accessRule)
-    }
-
     override fun createEdge(target: VertexInfo, edgeLabel: String?): JSONResponse {
         if (!AccessRuleValidator().isCorrectVertexTarget(target)) {
             return FAILResponse(data = "@ARCEE-001 Impossible create this edge $target from Access Rule")
         }
         val accessGroup = AccessRuleValidator()
-                .hasVertex(VertexInfo(VertexLabel.ACCESS_RULE.label, this.accessRule.code))
+                .hasVertex(this.accessRule.code)
                 ?: return FAILResponse(data = "@ARCEE-002 Impossible find Access Rule ${this.accessRule}")
         val vTarget = AccessRuleValidator().hasVertexTarget(target)
                 ?: return FAILResponse(data = "@ARCEE-003 Impossible find ${target.label.capitalize()} $target")

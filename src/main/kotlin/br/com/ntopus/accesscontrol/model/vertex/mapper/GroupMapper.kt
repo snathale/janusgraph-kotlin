@@ -14,43 +14,11 @@ class GroupMapper (val properties: Map<String, String>): IMapper {
     private val group = Group(properties)
     private val graph = GraphFactory.open()
 
-    override fun updateProperty(properties: List<Property>): JSONResponse {
-        if (!GroupValidator().canUpdateVertexProperty(properties)) {
-            return FAILResponse(data = "@GUPE-001 Group not have this properties $properties")
-        }
-        try {
-            val g = graph.traversal()
-            val group = g.V().hasLabel(VertexLabel.GROUP.label)
-            for (property in properties) {
-                group.property(property.name, property.value).next()
-            }
-            graph.tx().commit()
-        } catch (e: Exception) {
-            graph.tx().rollback()
-            return FAILResponse(data = "@GUPE-002 ${e.message.toString()}")
-        }
-        return SUCCESSResponse(data = this.group)
-    }
-
-    override fun delete(): JSONResponse {
-        val group = GroupValidator()
-                .hasVertex(VertexInfo(VertexLabel.USER.label, this.group.code))
-                ?: return FAILResponse(data = "@GDE-001 Impossible find Group ${this.group}")
-        try {
-            group.property(PropertyLabel.ENABLE.label, false)
-            graph.tx().commit()
-        } catch (e: Exception) {
-            graph.tx().rollback()
-            return FAILResponse(data = "@GDE-002 ${e.message.toString()}")
-        }
-        return SUCCESSResponse(data = null)
-    }
-
     override fun insert(): JSONResponse {
+        if (!GroupValidator().canInsertVertex(this.group)) {
+            return FAILResponse(data = "@GCVE-001 Empty Group properties")
+        }
         try {
-            if (!GroupValidator().canInsertVertex(this.group)) {
-                throw Exception("@GCVE-001 Empty Group properties")
-            }
             val group = graph.addVertex(VertexLabel.GROUP.label)
             group.property(PropertyLabel.NAME.label, this.group.name)
             group.property(PropertyLabel.CODE.label, this.group.code)
@@ -64,7 +32,52 @@ class GroupMapper (val properties: Map<String, String>): IMapper {
             graph.tx().rollback()
             return FAILResponse(data = "@GCVE-002 ${e.message.toString()}")
         }
-        return SUCCESSResponse(data = this.group)
+        val response = AgentResponse(
+                this.group.code, this.group.name,
+                this.group.formatDate(), this.group.enable, this.group.observation
+        )
+        return SUCCESSResponse(data = response)
+    }
+
+    override fun updateProperty(properties: List<Property>): JSONResponse {
+        val group = GroupValidator().hasVertex(this.group.code)
+                ?: return FAILResponse(data = "@GUPE-001 Impossible find Group with code ${this.group.code}")
+
+        if (!GroupValidator().canUpdateVertexProperty(properties)) {
+            return FAILResponse(data = "@GUPE-002 Group property can be updated")
+        }
+        try {
+            for (property in properties) {
+                group.property(property.name, property.value)
+            }
+            graph.tx().commit()
+        } catch (e: Exception) {
+            graph.tx().rollback()
+            return FAILResponse(data = "@GUPE-003 ${e.message.toString()}")
+        }
+        val traversal = graph.traversal().V().hasLabel(VertexLabel.GROUP.label).has(PropertyLabel.CODE.label, this.group.code)
+        val values = AbstractMapper.parseMapVertex(traversal)
+        val response = AgentResponse(
+                this.group.code,
+                AbstractMapper.parseMapValue(values[PropertyLabel.NAME.label].toString()),
+                AbstractMapper.formatDate(values[PropertyLabel.CREATION_DATE.label].toString()),
+                AbstractMapper.parseMapValue(values[PropertyLabel.ENABLE.label].toString()).toBoolean(),
+                AbstractMapper.parseMapValue((values[PropertyLabel.OBSERVATION.label].toString()))
+        )
+        return SUCCESSResponse(data = response)
+    }
+
+    override fun delete(): JSONResponse {
+        val group = GroupValidator().hasVertex(this.group.code)
+                ?: return FAILResponse(data = "@GDE-001 Impossible find Group with code ${this.group.code}")
+        try {
+            group.property(PropertyLabel.ENABLE.label, false)
+            graph.tx().commit()
+        } catch (e: Exception) {
+            graph.tx().rollback()
+            return FAILResponse(data = "@GDE-002 ${e.message.toString()}")
+        }
+        return SUCCESSResponse(data = null)
     }
 
     override fun createEdge(target: VertexInfo, edgeLabel: String?): JSONResponse {

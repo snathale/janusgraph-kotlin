@@ -20,9 +20,9 @@ class AccessGroupValidator: DefaultValidator() {
         }
     }
 
-    override fun hasVertex(source: VertexInfo): Vertex? {
+    override fun hasVertex(code: String): Vertex? {
         val g = graph.traversal()
-        return g.V().hasLabel(VertexLabel.ACCESS_GROUP.label).has(PropertyLabel.CODE.label, source.code).next()
+        return g.V().hasLabel(VertexLabel.ACCESS_GROUP.label).has(PropertyLabel.CODE.label, code).next()
     }
 
     override fun isCorrectVertexTarget(target: VertexInfo): Boolean {
@@ -34,7 +34,7 @@ class AccessGroupValidator: DefaultValidator() {
         }
     }
 
-    override fun hasProperty(vertex: VertexInfo, property: Property): Boolean {
+    override fun hasProperty(code: String, property: Property): Boolean {
         val g = graph.traversal()
         return g.V().hasLabel(VertexLabel.ACCESS_GROUP.label).has(property.name, property.value) != null
     }

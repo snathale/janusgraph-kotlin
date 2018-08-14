@@ -2,7 +2,7 @@ package br.com.ntopus.accesscontrol.model.vertex
 
 import br.com.ntopus.accesscontrol.model.vertex.base.*
 
-class User(properties: Map<String, String>): ICommonAgent(properties) {
+class User(properties: Map<String, String>): IAgent(properties) {
 
 //    companion object {
 //        override fun findByCode(code: String): ICommon {

@@ -24,4 +24,6 @@ abstract class ICommon(properties: Map<String, String>) {
         }
         return value.toString()
     }
+
+    abstract fun formatDate(): String
 }

@@ -10,7 +10,7 @@ interface IValidator {
     fun canInsertVertex(vertex: ICommon): Boolean
     fun canUpdateVertexProperty(properties: List<Property>): Boolean
     fun hasVertexTarget(target: VertexInfo): Vertex?
-    fun hasVertex(source: VertexInfo): Vertex?
+    fun hasVertex(code: String): Vertex?
     fun isCorrectVertexTarget(target: VertexInfo): Boolean
-    fun hasProperty(vertex: VertexInfo, property: Property): Boolean
+    fun hasProperty(code: String, property: Property): Boolean
 }

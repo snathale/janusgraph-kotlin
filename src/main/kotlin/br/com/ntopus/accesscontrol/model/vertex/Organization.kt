@@ -4,10 +4,9 @@ import br.com.ntopus.accesscontrol.model.GraphFactory
 import br.com.ntopus.accesscontrol.model.data.*
 import br.com.ntopus.accesscontrol.model.vertex.base.*
 import org.apache.tinkerpop.gremlin.structure.Vertex
-import java.time.LocalDate
 import java.util.*
 
-class Organization(properties: Map<String, String>): ICommonAgent(properties) {
+class Organization(properties: Map<String, String>): IAgent(properties) {
     companion object {
         fun findByCode(code: String): ICommon {
             val g = GraphFactory.open().traversal()

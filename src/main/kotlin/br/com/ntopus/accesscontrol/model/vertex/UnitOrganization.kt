@@ -4,10 +4,9 @@ import br.com.ntopus.accesscontrol.model.GraphFactory
 import br.com.ntopus.accesscontrol.model.data.*
 import br.com.ntopus.accesscontrol.model.vertex.base.*
 import sun.security.provider.certpath.Vertex
-import java.time.LocalDate
 import java.util.*
 
-class UnitOrganization(properties: Map<String, String>): ICommonAgent(properties) {
+class UnitOrganization(properties: Map<String, String>): IAgent(properties) {
     companion object {
         fun findByCode(code: String): ICommon {
             val g = GraphFactory.open().traversal()

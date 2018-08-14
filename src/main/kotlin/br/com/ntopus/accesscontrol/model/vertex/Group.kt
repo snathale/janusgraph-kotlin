@@ -5,11 +5,10 @@ import br.com.ntopus.accesscontrol.model.data.PropertyLabel
 import br.com.ntopus.accesscontrol.model.data.VertexLabel
 import br.com.ntopus.accesscontrol.model.vertex.base.*
 import org.apache.tinkerpop.gremlin.structure.Vertex
-import java.time.LocalDate
 import java.util.*
 
 
-class Group(properties: Map<String, String>): ICommonAgent(properties) {
+class Group(properties: Map<String, String>): IAgent(properties) {
 
     companion object {
         fun findByCode(code: String): ICommon {

@@ -6,20 +6,17 @@ import br.com.ntopus.accesscontrol.model.data.Property
 import br.com.ntopus.accesscontrol.model.data.PropertyLabel
 import br.com.ntopus.accesscontrol.model.data.VertexData
 import br.com.ntopus.accesscontrol.model.vertex.base.ERRORResponse
-import br.com.ntopus.accesscontrol.model.vertex.mapper.VertexInfo
 import com.google.gson.Gson
 import org.apache.tinkerpop.gremlin.structure.Vertex
 import org.springframework.web.bind.annotation.*
 import com.google.gson.GsonBuilder
 
-data class EdgeContext(val source: VertexInfo, val target: VertexInfo, val edgeLabel: String? = "")
-data class PropertyContext(val vertex: VertexInfo, val properties: List<Property>)
 @RestController
-@RequestMapping("api/v1")
-class ApiController {
+@RequestMapping("api/v1/vertex")
+class ApiVertexController {
 
     val graph = GraphFactory.open()
-    @PostMapping("/addVertex")
+    @PostMapping("/add")
     fun addVertex(@RequestBody vertex: VertexData): String {
         var gson = Gson()
         return try {
@@ -30,31 +27,19 @@ class ApiController {
         }
     }
 
-    @PostMapping("/addEdge")
-    fun addEdge(@RequestBody params: EdgeContext): String {
+    @PutMapping("/updateProperty/{label}/{code}")
+    fun updateVertexProperty(@PathVariable label: String, @PathVariable code: String, @RequestBody properties: List<Property>): String {
         var gson = Gson()
-        val vertex = VertexData(params.source.label, listOf(Property(PropertyLabel.CODE.label, params.source.code)))
+        val vertex = VertexData(label, listOf(Property(PropertyLabel.CODE.label, code)))
         return try {
             gson = GsonBuilder().serializeNulls().create()
-            return  gson.toJson(MapperFactory.createFactory(vertex).createEdge(params.target, params.edgeLabel))
-        } catch (e: Exception) {
-            gson.toJson(ERRORResponse(message = "@ACIE-001 Impossible create a Edge ${e.message}"))
-        }
-    }
-
-    @PutMapping("/updateVertexProperty/{code}")
-    fun updateVertexProperty(@RequestBody params: PropertyContext): String {
-        var gson = Gson()
-        val vertex = VertexData(params.vertex.label, listOf(Property(PropertyLabel.CODE.label, params.vertex.code)))
-        return try {
-            gson = GsonBuilder().serializeNulls().create()
-            return  gson.toJson(MapperFactory.createFactory(vertex).updateProperty(params.properties))
+            return  gson.toJson(MapperFactory.createFactory(vertex).updateProperty(properties))
         } catch (e: Exception) {
             gson.toJson(ERRORResponse(message = "@ACUPV-001 Impossible update Vertex Property ${e.message}"))
         }
     }
 
-    @DeleteMapping("/deleteVertex/{code}")
+    @DeleteMapping("/delete/{code}")
     fun deleteVertex(@PathVariable code: String, @RequestBody vertex: String): String {
         var gson = Gson()
         val vertexData = VertexData(vertex, listOf(Property(PropertyLabel.CODE.label, code)))
@@ -68,7 +53,7 @@ class ApiController {
 
     data class VertexList (val label: String, val properties: Map<String, Vertex>, val edgeIn: ArrayList<Edge>, val edgeOut: ArrayList<Edge>)
     data class Edge (val label: String, val properties: Map<String, Vertex>)
-    @GetMapping("/listVertex")
+    @GetMapping("/list")
     fun listVertex(@RequestParam(value = "limit", defaultValue = "10") limit: Long): ArrayList<VertexList> {
         val g = graph.traversal()
         val search = g.V().limit(limit).toList().iterator()

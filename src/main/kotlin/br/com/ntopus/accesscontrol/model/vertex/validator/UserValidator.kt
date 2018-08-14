@@ -11,20 +11,16 @@ import org.apache.tinkerpop.gremlin.structure.Vertex
 class UserValidator : DefaultValidator() {
 
     override fun hasVertexTarget(target: VertexInfo): Vertex? {
-        val graph = GraphFactory.open()
         return try {
-            val g = graph.traversal()
-            g.V().hasLabel(VertexLabel.ACCESS_RULE.label).has(PropertyLabel.CODE.label, target.code).next()
+            graph.traversal().V().hasLabel(VertexLabel.ACCESS_RULE.label).has(PropertyLabel.CODE.label, target.code).next()
         } catch (e: Exception) {
             null
         }
-
     }
 
-    override fun hasVertex(source: VertexInfo): Vertex? {
-        val g = graph.traversal()
+    override fun hasVertex(code: String): Vertex? {
         return try {
-            g.V().hasLabel(VertexLabel.USER.label).has(PropertyLabel.CODE.label, source.code).next()
+            graph.traversal().V().hasLabel(VertexLabel.USER.label).has(PropertyLabel.CODE.label, code).next()
         }
         catch (e: Exception) {
             null
@@ -32,12 +28,13 @@ class UserValidator : DefaultValidator() {
     }
 
     override fun isCorrectVertexTarget(target: VertexInfo): Boolean {
-        return target.label.equals(VertexLabel.ACCESS_RULE.label)
+        return target.label == VertexLabel.ACCESS_RULE.label
     }
 
-    override fun hasProperty(vertex: VertexInfo, property: Property): Boolean {
+    override fun hasProperty(code: String, property: Property): Boolean {
         val g = graph.traversal()
-        return g.V().hasLabel(VertexLabel.USER.label).has(property.name, property.value) != null
+        return g.V().hasLabel(VertexLabel.USER.label).has(PropertyLabel.CODE.label, code)
+                .has(property.name, property.value).next() != null
     }
 
     override fun canUpdateVertexProperty(properties: List<Property>): Boolean {
