@@ -1,6 +1,5 @@
 package br.com.ntopus.accesscontrol.factory
 
-import br.com.ntopus.accesscontrol.model.GraphFactory
 import br.com.ntopus.accesscontrol.model.data.VertexData
 import br.com.ntopus.accesscontrol.model.data.VertexLabel
 import br.com.ntopus.accesscontrol.model.vertex.mapper.*

@@ -33,13 +33,13 @@ data class PermissionResponse(
 
 data class AssociationResponse(
         @SerializedName("code") val code: String,
-        @SerializedName("expirationDate") val expirationDate: String,
+        @SerializedName("expirationDate") val expirationDate: String?,
         @SerializedName("enable") val enable: Boolean
 )
 
 interface IMapper {
     fun insert(): JSONResponse
     fun updateProperty(properties: List<Property>): JSONResponse
-    fun createEdge(target: VertexInfo, edgeLabel: String? = ""): JSONResponse
+    fun createEdge(target: VertexInfo): JSONResponse
     fun delete(): JSONResponse
 }

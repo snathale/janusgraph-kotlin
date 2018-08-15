@@ -48,12 +48,12 @@
       "unique": true,
       "indexOnly": "user"},
     {"name": "vByRuleCode",
-      "propertyKeys": ["code", "enable"],
+      "propertyKeys": ["code"],
       "composite": true,
       "unique": true,
       "indexOnly": "rule"},
     {"name": "vByAccessGroupCode",
-      "propertyKeys": ["code", "enable"],
+      "propertyKeys": ["code"],
       "composite": true,
       "unique": true,
       "indexOnly": "accessGroup"},
@@ -65,7 +65,7 @@
     {"name": "vByAccessRuleCode",
       "propertyKeys": ["code"],
       "composite": true,
-      "unique": false,
+      "unique": true,
       "indexOnly": "accessRule"}
   ],
   "edgeIndexes": [

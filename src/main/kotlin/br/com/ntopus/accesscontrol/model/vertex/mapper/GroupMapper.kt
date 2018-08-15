@@ -60,7 +60,7 @@ class GroupMapper (val properties: Map<String, String>): IMapper {
         val response = AgentResponse(
                 this.group.code,
                 AbstractMapper.parseMapValue(values[PropertyLabel.NAME.label].toString()),
-                AbstractMapper.formatDate(values[PropertyLabel.CREATION_DATE.label].toString()),
+                AbstractMapper.parseMapValueDate(values[PropertyLabel.CREATION_DATE.label].toString())!!,
                 AbstractMapper.parseMapValue(values[PropertyLabel.ENABLE.label].toString()).toBoolean(),
                 AbstractMapper.parseMapValue((values[PropertyLabel.OBSERVATION.label].toString()))
         )
@@ -80,7 +80,7 @@ class GroupMapper (val properties: Map<String, String>): IMapper {
         return SUCCESSResponse(data = null)
     }
 
-    override fun createEdge(target: VertexInfo, edgeLabel: String?): JSONResponse {
+    override fun createEdge(target: VertexInfo): JSONResponse {
         return FAILResponse(data = "@GCEE-001 Impossible create a edge from this vertex")
     }
 }

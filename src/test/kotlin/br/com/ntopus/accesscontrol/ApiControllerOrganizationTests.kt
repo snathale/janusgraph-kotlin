@@ -143,7 +143,7 @@ class ApiControllerOrganizationTests: ApiControllerHerper() {
         Assert.assertEquals("Kofre", AbstractMapper.parseMapValue(values["name"].toString()))
         Assert.assertEquals("1", AbstractMapper.parseMapValue(values["code"].toString()))
         Assert.assertEquals("This is a Organization", AbstractMapper.parseMapValue(values["observation"].toString()))
-        Assert.assertEquals(format.format(date), AbstractMapper.formatDate(values["creationDate"].toString()))
+        Assert.assertEquals(format.format(date), AbstractMapper.parseMapValueDate(values["creationDate"].toString()))
         Assert.assertEquals(true, AbstractMapper.parseMapValue(values["enable"].toString()).toBoolean())
     }
 
@@ -227,7 +227,7 @@ class ApiControllerOrganizationTests: ApiControllerHerper() {
     }
 
     @Test
-    fun canUpdateOrganizationDefaultProperty() {
+    fun cantUpdateOrganizationDefaultProperty() {
         val properties : List<Property> = listOf(Property("name", "Organization Test"), Property("code", "2"))
         val requestUpdate = HttpEntity(properties)
         val response = restTemplate.exchange(
@@ -254,7 +254,7 @@ class ApiControllerOrganizationTests: ApiControllerHerper() {
         Assert.assertEquals("Kofre", AbstractMapper.parseMapValue(values["name"].toString()))
         Assert.assertEquals("1", AbstractMapper.parseMapValue(values["code"].toString()))
         Assert.assertEquals("This is a Organization", AbstractMapper.parseMapValue(values["observation"].toString()))
-        Assert.assertEquals(format.format(date), AbstractMapper.formatDate(values["creationDate"].toString()))
+        Assert.assertEquals(format.format(date), AbstractMapper.parseMapValueDate(values["creationDate"].toString()))
         Assert.assertEquals(false, AbstractMapper.parseMapValue(values["enable"].toString()).toBoolean())
     }
 

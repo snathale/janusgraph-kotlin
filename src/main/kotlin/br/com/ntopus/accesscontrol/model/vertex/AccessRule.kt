@@ -6,13 +6,13 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class AccessRule(properties: Map<String, String>): ICommon(properties) {
-    private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
+    private val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
 
     @SerializedName("expirationDate")
-    val expirationDate: Date = if (this.toString(properties["expirationDate"]).isEmpty()) Date() else dateFormat.parse(properties["expirationDate"])
+    val expirationDate: Date? = if (!this.toString(properties["expirationDate"]).isEmpty()) format.parse(this.toString(properties["expirationDate"])) else null
 
-    override fun formatDate(): String {
-        val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
+    override fun formatDate(): String? {
+        if (this.expirationDate == null) return null
         return format.format(this.expirationDate)
     }
 //    companion object: ICommon {

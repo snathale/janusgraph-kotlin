@@ -18,7 +18,8 @@ object AbstractMapper {
         return values
     }
 
-    fun formatDate(date: String): String {
+    fun parseMapValueDate(date: String): String? {
+        if (date.isEmpty()) return null
         val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
         val defaultFormat = SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.US)
         return format.format(defaultFormat.parse(AbstractMapper.parseMapValue(date)))

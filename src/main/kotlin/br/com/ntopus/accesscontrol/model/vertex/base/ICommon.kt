@@ -18,12 +18,12 @@ abstract class ICommon(properties: Map<String, String>) {
     @SerializedName("enable")
     var enable: Boolean = if (properties["enable"] != null) properties["enable"]!!.toBoolean() else true
 
-    fun toString(value: String?): String {
+    fun toString(value: Any?): String {
         if (value.toString() == "null") {
             return ""
         }
         return value.toString()
     }
 
-    abstract fun formatDate(): String
+    abstract fun formatDate(): String?
 }

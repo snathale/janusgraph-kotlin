@@ -107,14 +107,7 @@ class ApiControllerTests: ApiControllerHerper() {
         val response =  restTemplate.postForEntity("${this.createVertexBaseUrl(this.port)}/add", user, String::class.java)
         val obj = gson.fromJson(response.body, FAILResponse::class.java)
         Assert.assertEquals("@UCVE-002 Adding this property for key [code] and value [1] violates a uniqueness constraint [vByUserCode]", obj.data)
-        val g = GraphFactory.open().traversal()
-        val userStorage = g.V().hasLabel(VertexLabel.USER.label).has(PropertyLabel.CODE.label, "1")
-        val values = AbstractMapper.parseMapVertex(userStorage)
-        Assert.assertEquals("UserTest", AbstractMapper.parseMapValue(values["name"].toString()))
-        Assert.assertEquals("1", AbstractMapper.parseMapValue(values["code"].toString()))
-        Assert.assertEquals("This is UserTest", AbstractMapper.parseMapValue(values["observation"].toString()))
-        Assert.assertEquals(format.format(date), AbstractMapper.formatDate(values["creationDate"].toString()))
-        Assert.assertEquals(true, AbstractMapper.parseMapValue(values["enable"].toString()).toBoolean())
+        this.assertUserMapper("1", "UserTest", date, "This is UserTest", true)
     }
 
     @Test
@@ -156,12 +149,7 @@ class ApiControllerTests: ApiControllerHerper() {
         val edgeResponse =  restTemplate.postForEntity("${this.createEdgeBaseUrl(this.port)}/add", params, String::class.java)
         val gson = GsonBuilder().serializeNulls().create()
         val edgeObj: CreateEdgeSuccess = gson.fromJson(edgeResponse.body, CreateEdgeSuccess::class.java)
-        Assert.assertEquals("SUCCESS", edgeObj.status)
-        Assert.assertEquals("user", edgeObj.data.source.label)
-        Assert.assertEquals("1", edgeObj.data.source.code)
-        Assert.assertEquals("accessRule", edgeObj.data.target.label)
-        Assert.assertEquals("1", edgeObj.data.target.code)
-        Assert.assertEquals("associated", edgeObj.data.edgeLabel)
+        this.assertEdgeCreatedSuccess(source, target, edgeObj, "associated")
         val g = GraphFactory.open().traversal()
         val user = g.V().hasLabel(VertexLabel.USER.label).has(PropertyLabel.CODE.label, "1")
         val userValues = AbstractMapper.parseMapVertex(user)
@@ -182,18 +170,8 @@ class ApiControllerTests: ApiControllerHerper() {
         val response = restTemplate.exchange("${this.createVertexBaseUrl(this.port)}/updateProperty/user/1", HttpMethod.PUT, requestUpdate, String::class.java)
         val gson = GsonBuilder().serializeNulls().create()
         val obj: CreateAgentSuccess = gson.fromJson(response.body, CreateAgentSuccess::class.java)
-        Assert.assertEquals("SUCCESS", obj.status)
-        Assert.assertEquals("Test", obj.data.name)
-        Assert.assertEquals("1", obj.data.code)
-        Assert.assertEquals("Property updated", obj.data.observation)
-        Assert.assertEquals(true, obj.data.enable)
-        val g = GraphFactory.open().traversal()
-        val userStorage = g.V().hasLabel(VertexLabel.USER.label).has(PropertyLabel.CODE.label, "1")
-        val values = AbstractMapper.parseMapVertex(userStorage)
-        Assert.assertEquals("Test", AbstractMapper.parseMapValue(values["name"].toString()))
-        Assert.assertEquals("1", AbstractMapper.parseMapValue(values["code"].toString()))
-        Assert.assertEquals("Property updated", AbstractMapper.parseMapValue(values["observation"].toString()))
-        Assert.assertEquals(true, AbstractMapper.parseMapValue(values["enable"].toString()).toBoolean())
+        this.assertUserApiResponseSuccess("1", "Test", date, "Property updated", true, obj)
+        this.assertUserMapper("1", "Test", date, "Property updated", true)
     }
 
     @Test
@@ -215,14 +193,7 @@ class ApiControllerTests: ApiControllerHerper() {
         val obj: SUCCESSResponse = gson.fromJson(response.body, SUCCESSResponse::class.java)
         Assert.assertEquals("SUCCESS", obj.status)
         Assert.assertEquals(null, obj.data)
-        val g = GraphFactory.open().traversal()
-        val userStorage = g.V().hasLabel(VertexLabel.USER.label).has(PropertyLabel.CODE.label, "1")
-        val values = AbstractMapper.parseMapVertex(userStorage)
-        Assert.assertEquals("UserTest", AbstractMapper.parseMapValue(values["name"].toString()))
-        Assert.assertEquals("1", AbstractMapper.parseMapValue(values["code"].toString()))
-        Assert.assertEquals("This is UserTest", AbstractMapper.parseMapValue(values["observation"].toString()))
-        Assert.assertEquals(format.format(date), AbstractMapper.formatDate(values["creationDate"].toString()))
-        Assert.assertEquals(false, AbstractMapper.parseMapValue(values["enable"].toString()).toBoolean())
+        this.assertUserMapper("1", "UserTest", date, "This is UserTest", false)
     }
 
     @Test

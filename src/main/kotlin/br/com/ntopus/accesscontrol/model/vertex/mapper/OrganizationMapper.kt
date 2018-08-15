@@ -40,7 +40,7 @@ class OrganizationMapper (val properties: Map<String, String>): IMapper {
         return SUCCESSResponse(data = response)
     }
 
-    override fun createEdge(target: VertexInfo, edgeLabel: String?): JSONResponse {
+    override fun createEdge(target: VertexInfo): JSONResponse {
         if (!OrganizationValidator().isCorrectVertexTarget(target)) {
             return FAILResponse(data = "@OCEE-001 Impossible create this edge with target code ${target.code}")
         }
@@ -85,7 +85,7 @@ class OrganizationMapper (val properties: Map<String, String>): IMapper {
         val response = AgentResponse(
                 this.organization.code,
                 AbstractMapper.parseMapValue(values[PropertyLabel.NAME.label].toString()),
-                AbstractMapper.formatDate(values[PropertyLabel.CREATION_DATE.label].toString()),
+                AbstractMapper.parseMapValueDate(values[PropertyLabel.CREATION_DATE.label].toString())!!,
                 AbstractMapper.parseMapValue(values[PropertyLabel.ENABLE.label].toString()).toBoolean(),
                 AbstractMapper.parseMapValue((values[PropertyLabel.OBSERVATION.label].toString()))
         )

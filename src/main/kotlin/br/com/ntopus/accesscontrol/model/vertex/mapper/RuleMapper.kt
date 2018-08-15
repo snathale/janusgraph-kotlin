@@ -38,7 +38,7 @@ class RuleMapper (val properties: Map<String, String>): IMapper {
         return SUCCESSResponse(data = response)
     }
 
-    override fun createEdge(target: VertexInfo, edgeLabel: String?): JSONResponse {
+    override fun createEdge(target: VertexInfo): JSONResponse {
         return FAILResponse(data = "@RCEE-001 Impossible create a edge with ${target.code}")
     }
 
@@ -64,7 +64,7 @@ class RuleMapper (val properties: Map<String, String>): IMapper {
         val response = PermissionResponse(
                 this.rule.code,
                 AbstractMapper.parseMapValue(values[PropertyLabel.NAME.label].toString()),
-                AbstractMapper.formatDate(values[PropertyLabel.CREATION_DATE.label].toString()),
+                AbstractMapper.parseMapValueDate(values[PropertyLabel.CREATION_DATE.label].toString())!!,
                 AbstractMapper.parseMapValue((values[PropertyLabel.DESCRIPTION.label].toString())),
                 AbstractMapper.parseMapValue(values[PropertyLabel.ENABLE.label].toString()).toBoolean()
         )

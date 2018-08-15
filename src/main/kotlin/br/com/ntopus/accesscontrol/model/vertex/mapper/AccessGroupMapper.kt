@@ -17,6 +17,30 @@ class AccessGroupMapper(val properties: Map<String, String>) : IMapper {
     private val graph = GraphFactory.open()
     private val accessGroup = AccessGroup(properties)
 
+    override fun insert(): JSONResponse {
+        if (!AccessGroupValidator().canInsertVertex(this.accessGroup)) {
+            return FAILResponse(data = "@AGCVE-001 Empty Access Group properties")
+        }
+        try {
+            val accessGroup = graph.addVertex(VertexLabel.ACCESS_GROUP.label)
+            accessGroup.property(PropertyLabel.NAME.label, this.accessGroup.name)
+            accessGroup.property(PropertyLabel.CODE.label, this.accessGroup.code)
+            accessGroup.property(PropertyLabel.CREATION_DATE.label, this.accessGroup.creationDate)
+            accessGroup.property(PropertyLabel.ENABLE.label, this.accessGroup.enable)
+            if (!this.accessGroup.description.isEmpty()) {
+                accessGroup.property(PropertyLabel.DESCRIPTION.label, this.accessGroup.description)
+            }
+            graph.tx().commit()
+        } catch (e: Exception) {
+            graph.tx().rollback()
+            return FAILResponse(data = "@AGCVE-002 ${e.message.toString()}")
+        }
+        val response = PermissionResponse(
+                this.accessGroup.code, this.accessGroup.name, this.accessGroup.formatDate(), this.accessGroup.description, this.accessGroup.enable
+        )
+        return SUCCESSResponse(data = response)
+    }
+
     override fun updateProperty(properties: List<Property>): JSONResponse {
         return FAILResponse(data = "@AGUPE-001 Impossible update proprieties from this vertex")
     }
@@ -35,28 +59,7 @@ class AccessGroupMapper(val properties: Map<String, String>) : IMapper {
         return SUCCESSResponse(data = null)
     }
 
-    override fun insert(): JSONResponse {
-        try {
-            if (!AccessGroupValidator().canInsertVertex(this.accessGroup)) {
-                throw Exception("@AGCVE-001 Empty Access Group properties")
-            }
-            val accessGroup = graph.addVertex(VertexLabel.ACCESS_GROUP.label)
-            accessGroup.property(PropertyLabel.NAME.label, this.accessGroup.name)
-            accessGroup.property(PropertyLabel.CODE.label, this.accessGroup.code)
-            accessGroup.property(PropertyLabel.CREATION_DATE.label, this.accessGroup.creationDate)
-            accessGroup.property(PropertyLabel.ENABLE.label, this.accessGroup.enable)
-            if (!this.accessGroup.description.isEmpty()) {
-                accessGroup.property(PropertyLabel.DESCRIPTION.label, this.accessGroup.description)
-            }
-            graph.tx().commit()
-        } catch (e: Exception) {
-            graph.tx().rollback()
-            return FAILResponse(data = "@AGCVE-002 ${e.message.toString()}")
-        }
-        return SUCCESSResponse(data = this.accessGroup)
-    }
-
-    override fun createEdge(target: VertexInfo, edgeLabel: String?): JSONResponse {
+    override fun createEdge(target: VertexInfo): JSONResponse {
         if (!AccessGroupValidator().isCorrectVertexTarget(target)) {
             return FAILResponse(data = "@AGCEE-001 Impossible create this edge $target from Access Group")
         }
@@ -65,7 +68,7 @@ class AccessGroupMapper(val properties: Map<String, String>) : IMapper {
                 ?: return FAILResponse(data = "@AGCEE-002 Impossible find Access Group ${this.accessGroup}")
         val vTarget = AccessGroupValidator().hasVertexTarget(target)
                 ?: return FAILResponse(data = "@AGCEE-003 Impossible find ${target.label.capitalize()} $target")
-        return when(edgeLabel) {
+        return when(target.label) {
 //            EdgeLabel.ADD.label -> this.createAddEdgeFromRule(accessGroup, vTarget, target)
 //            EdgeLabel.REMOVE.label -> this.createRemoveEdgeFromRule(accessGroup, vTarget, target)
 //            EdgeLabel.INHERIT.label -> this.createInheritEdgeFromAccessGroup(accessGroup, vTarget, target)

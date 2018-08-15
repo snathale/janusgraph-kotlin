@@ -146,7 +146,7 @@ class ApiControllerUnitOrganizationTests: ApiControllerHerper() {
         Assert.assertEquals("Bahia", AbstractMapper.parseMapValue(values["name"].toString()))
         Assert.assertEquals("1", AbstractMapper.parseMapValue(values["code"].toString()))
         Assert.assertEquals("This is a Unit Organization", AbstractMapper.parseMapValue(values["observation"].toString()))
-        Assert.assertEquals(format.format(date), AbstractMapper.formatDate(values["creationDate"].toString()))
+        Assert.assertEquals(format.format(date), AbstractMapper.parseMapValueDate(values["creationDate"].toString()))
         Assert.assertEquals(true, AbstractMapper.parseMapValue(values["enable"].toString()).toBoolean())
     }
 
@@ -258,7 +258,7 @@ class ApiControllerUnitOrganizationTests: ApiControllerHerper() {
         Assert.assertEquals("Bahia", AbstractMapper.parseMapValue(values["name"].toString()))
         Assert.assertEquals("1", AbstractMapper.parseMapValue(values["code"].toString()))
         Assert.assertEquals("This is a Unit Organization", AbstractMapper.parseMapValue(values["observation"].toString()))
-        Assert.assertEquals(format.format(date), AbstractMapper.formatDate(values["creationDate"].toString()))
+        Assert.assertEquals(format.format(date), AbstractMapper.parseMapValueDate(values["creationDate"].toString()))
         Assert.assertEquals(false, AbstractMapper.parseMapValue(values["enable"].toString()).toBoolean())
     }
 
