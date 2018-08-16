@@ -84,7 +84,7 @@ class AccessRuleMapper (val properties: Map<String, String>): IMapper {
         return SUCCESSResponse(data = null)
     }
 
-    override fun createEdge(target: VertexInfo): JSONResponse {
+    override fun createEdge(target: VertexInfo, edgeTarget: String): JSONResponse {
         if (!AccessRuleValidator().isCorrectVertexTarget(target)) {
             return FAILResponse(data = "@ARCEE-001 Impossible create this edge with target code ${target.code}")
         }

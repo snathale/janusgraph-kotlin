@@ -40,7 +40,7 @@ class UserMapper (val properties: Map<String, String>): IMapper {
         return SUCCESSResponse(data = response)
     }
 
-    override fun createEdge(target: VertexInfo): JSONResponse {
+    override fun createEdge(target: VertexInfo, edgeTarget: String): JSONResponse {
         if (!UserValidator().isCorrectVertexTarget(target)) {
             return FAILResponse(data = "@UCEE-001 Impossible create edge with target code ${target.code}")
         }
@@ -90,8 +90,7 @@ class UserMapper (val properties: Map<String, String>): IMapper {
     }
 
     override fun delete(): JSONResponse {
-        val user = UserValidator()
-                .hasVertex(this.user.code)
+        val user = UserValidator().hasVertex(this.user.code)
                 ?: return FAILResponse(data = "@UDE-001 Impossible find User with code ${this.user.code}")
         try {
             user.property(PropertyLabel.ENABLE.label, false)

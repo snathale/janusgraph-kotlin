@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-data class EdgeContext(val source: VertexInfo, val target: VertexInfo)
+data class EdgeContext(val source: VertexInfo, val target: VertexInfo, val edgeLabel: String? = "")
 @RestController
 @RequestMapping("api/v1/edge")
 class ApiEdgeController {
@@ -24,7 +24,7 @@ class ApiEdgeController {
         val vertex = VertexData(params.source.label, listOf(Property(PropertyLabel.CODE.label, params.source.code)))
         return try {
             gson = GsonBuilder().serializeNulls().create()
-            return  gson.toJson(MapperFactory.createFactory(vertex).createEdge(params.target))
+            return  gson.toJson(MapperFactory.createFactory(vertex).createEdge(params.target, params.edgeLabel.toString()))
         } catch (e: Exception) {
             gson.toJson(ERRORResponse(message = "@ACIE-001 Impossible create a Edge ${e.message}"))
         }

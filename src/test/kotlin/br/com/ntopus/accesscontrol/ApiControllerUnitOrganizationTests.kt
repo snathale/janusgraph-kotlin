@@ -1,6 +1,6 @@
 package br.com.ntopus.accesscontrol
 
-import br.com.ntopus.accesscontrol.helper.ApiControllerHerper
+import br.com.ntopus.accesscontrol.helper.ApiControllerHelper
 import br.com.ntopus.accesscontrol.helper.CreateEdgeSuccess
 import br.com.ntopus.accesscontrol.helper.CreateAgentSuccess
 import br.com.ntopus.accesscontrol.model.GraphFactory
@@ -33,7 +33,7 @@ import java.util.*
 
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class ApiControllerUnitOrganizationTests: ApiControllerHerper() {
+class ApiControllerUnitOrganizationTests: ApiControllerHelper() {
 
     @Autowired
     lateinit var restTemplate: TestRestTemplate

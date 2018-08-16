@@ -42,7 +42,7 @@ class UnitOrganizationMapper (val properties: Map<String, String>): IMapper {
         return SUCCESSResponse(data = response)
     }
 
-    override fun createEdge(target: VertexInfo): JSONResponse {
+    override fun createEdge(target: VertexInfo, edgeTarget: String): JSONResponse {
         if (!UnitOrganizationValidator().isCorrectVertexTarget(target)) {
             return FAILResponse(data = "@UOCEE-001 Impossible create edge with target code ${target.code}")
         }

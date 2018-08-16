@@ -80,7 +80,7 @@ class GroupMapper (val properties: Map<String, String>): IMapper {
         return SUCCESSResponse(data = null)
     }
 
-    override fun createEdge(target: VertexInfo): JSONResponse {
+    override fun createEdge(target: VertexInfo, edgeTarget: String): JSONResponse {
         return FAILResponse(data = "@GCEE-001 Impossible create a edge from this vertex")
     }
 }

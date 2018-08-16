@@ -1,6 +1,6 @@
 package br.com.ntopus.accesscontrol
 
-import br.com.ntopus.accesscontrol.helper.ApiControllerHerper
+import br.com.ntopus.accesscontrol.helper.ApiControllerHelper
 import br.com.ntopus.accesscontrol.helper.CreateEdgeSuccess
 import br.com.ntopus.accesscontrol.helper.CreateAgentSuccess
 import br.com.ntopus.accesscontrol.model.GraphFactory
@@ -32,7 +32,7 @@ import org.springframework.http.HttpMethod
 
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class ApiControllerTests: ApiControllerHerper() {
+class ApiControllerTests: ApiControllerHelper() {
 
     @Autowired
     lateinit var restTemplate: TestRestTemplate
@@ -111,7 +111,7 @@ class ApiControllerTests: ApiControllerHerper() {
     }
 
     @Test
-    fun canCreateEdgeWithTargetThatNotExist() {
+    fun cantCreateEdgeWithTargetThatNotExist() {
         val source = VertexInfo("user", "1")
         val target = VertexInfo("accessRule", "2")
         val params: Map<String, VertexInfo> = hashMapOf("source" to source, "target" to target)

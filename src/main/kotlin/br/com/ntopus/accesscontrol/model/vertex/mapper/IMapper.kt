@@ -1,5 +1,6 @@
 package br.com.ntopus.accesscontrol.model.vertex.mapper
 
+import br.com.ntopus.accesscontrol.model.data.EdgeLabel
 import br.com.ntopus.accesscontrol.model.data.Property
 import br.com.ntopus.accesscontrol.model.vertex.base.JSONResponse
 import com.google.gson.annotations.SerializedName
@@ -40,6 +41,6 @@ data class AssociationResponse(
 interface IMapper {
     fun insert(): JSONResponse
     fun updateProperty(properties: List<Property>): JSONResponse
-    fun createEdge(target: VertexInfo): JSONResponse
+    fun createEdge(target: VertexInfo, edgeTarget: String = ""): JSONResponse
     fun delete(): JSONResponse
 }

@@ -1,7 +1,6 @@
 package br.com.ntopus.accesscontrol.model.vertex.mapper
 
 import br.com.ntopus.accesscontrol.model.GraphFactory
-import br.com.ntopus.accesscontrol.model.data.EdgeLabel
 import br.com.ntopus.accesscontrol.model.data.Property
 import br.com.ntopus.accesscontrol.model.data.PropertyLabel
 import br.com.ntopus.accesscontrol.model.data.VertexLabel
@@ -9,9 +8,9 @@ import br.com.ntopus.accesscontrol.model.vertex.AccessGroup
 import br.com.ntopus.accesscontrol.model.vertex.base.FAILResponse
 import br.com.ntopus.accesscontrol.model.vertex.base.JSONResponse
 import br.com.ntopus.accesscontrol.model.vertex.base.SUCCESSResponse
+import br.com.ntopus.accesscontrol.model.vertex.mapper.factory.AccessGroupEdgeFactory
 import br.com.ntopus.accesscontrol.model.vertex.validator.AccessGroupValidator
-import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal
-import org.apache.tinkerpop.gremlin.structure.Vertex
+import br.com.ntopus.accesscontrol.model.vertex.validator.RuleValidator
 
 class AccessGroupMapper(val properties: Map<String, String>) : IMapper {
     private val graph = GraphFactory.open()
@@ -36,19 +35,66 @@ class AccessGroupMapper(val properties: Map<String, String>) : IMapper {
             return FAILResponse(data = "@AGCVE-002 ${e.message.toString()}")
         }
         val response = PermissionResponse(
-                this.accessGroup.code, this.accessGroup.name, this.accessGroup.formatDate(), this.accessGroup.description, this.accessGroup.enable
+                this.accessGroup.code,
+                this.accessGroup.name,
+                this.accessGroup.formatDate(),
+                this.accessGroup.description,
+                this.accessGroup.enable
         )
         return SUCCESSResponse(data = response)
     }
 
+    override fun createEdge(target: VertexInfo, edgeTarget: String): JSONResponse {
+        if (!AccessGroupValidator().isCorrectVertexTarget(target)) {
+            return FAILResponse(data = "@AGCEE-001 Impossible create this edge with target code ${target.code}")
+        }
+        val vSource = AccessGroupValidator().hasVertex(this.accessGroup.code)
+                ?: return FAILResponse(
+                        data = "@AGCEE-002 Impossible find Access Group with code ${this.accessGroup.code}"
+                )
+        val vTarget = AccessGroupValidator().hasVertexTarget(target)
+                ?: return FAILResponse(
+                        data = "@AGCEE-003 Impossible find ${target.label.capitalize()} with code ${target.code}"
+                )
+        val edgeForTarget = AccessGroupEdgeFactory().edgeForTarget(target, edgeTarget)
+                ?: return FAILResponse(
+                        data = "@AGCEE-004 Impossible create a edge from Access Group with code ${this.accessGroup.code}"
+                )
+        return edgeForTarget.createEdge(vSource, vTarget, target, this.accessGroup.code)
+    }
+
     override fun updateProperty(properties: List<Property>): JSONResponse {
-        return FAILResponse(data = "@AGUPE-001 Impossible update proprieties from this vertex")
+        val accessGroup = AccessGroupValidator().hasVertex(this.accessGroup.code)
+                ?: return FAILResponse(data = "AGUPE-001 Impossible find Access Group with code ${this.accessGroup.code}")
+        if (!AccessGroupValidator().canUpdateVertexProperty(properties)) {
+            return FAILResponse(data = "@AGUPE-002 Access Group property can be updated")
+        }
+
+        try {
+            for (property in properties) {
+                accessGroup.property(property.name, property.value)
+            }
+            graph.tx().commit()
+        } catch (e: Exception) {
+            graph.tx().rollback()
+            return FAILResponse(data = "@AGUPE-003 ${e.message.toString()}")
+        }
+        val traversal = graph.traversal().V().hasLabel(VertexLabel.ACCESS_GROUP.label)
+                .has(PropertyLabel.CODE.label, this.accessGroup.code)
+        val values = AbstractMapper.parseMapVertex(traversal)
+        val response = PermissionResponse(
+                this.accessGroup.code,
+                AbstractMapper.parseMapValue(values[PropertyLabel.NAME.label].toString()),
+                AbstractMapper.parseMapValueDate(values[PropertyLabel.CREATION_DATE.label].toString())!!,
+                AbstractMapper.parseMapValue((values[PropertyLabel.DESCRIPTION.label].toString())),
+                AbstractMapper.parseMapValue(values[PropertyLabel.ENABLE.label].toString()).toBoolean()
+        )
+        return SUCCESSResponse(data = response)
     }
 
     override fun delete(): JSONResponse {
-        val user = AccessGroupValidator()
-                .hasVertex(this.accessGroup.code)
-                ?: return FAILResponse(data = "@AGDE-001 Impossible find Access Group ${this.accessGroup}")
+        val user = AccessGroupValidator().hasVertex(this.accessGroup.code)
+                ?: return FAILResponse(data = "@AGDE-001 Impossible find Access Group with code ${this.accessGroup.code}")
         try {
             user.property(PropertyLabel.ENABLE.label, false)
             graph.tx().commit()
@@ -57,64 +103,5 @@ class AccessGroupMapper(val properties: Map<String, String>) : IMapper {
             return FAILResponse(data = "@AGDE-002 ${e.message.toString()}")
         }
         return SUCCESSResponse(data = null)
-    }
-
-    override fun createEdge(target: VertexInfo): JSONResponse {
-        if (!AccessGroupValidator().isCorrectVertexTarget(target)) {
-            return FAILResponse(data = "@AGCEE-001 Impossible create this edge $target from Access Group")
-        }
-        val accessGroup = AccessGroupValidator()
-                .hasVertex(this.accessGroup.code)
-                ?: return FAILResponse(data = "@AGCEE-002 Impossible find Access Group ${this.accessGroup}")
-        val vTarget = AccessGroupValidator().hasVertexTarget(target)
-                ?: return FAILResponse(data = "@AGCEE-003 Impossible find ${target.label.capitalize()} $target")
-        return when(target.label) {
-//            EdgeLabel.ADD.label -> this.createAddEdgeFromRule(accessGroup, vTarget, target)
-//            EdgeLabel.REMOVE.label -> this.createRemoveEdgeFromRule(accessGroup, vTarget, target)
-//            EdgeLabel.INHERIT.label -> this.createInheritEdgeFromAccessGroup(accessGroup, vTarget, target)
-            else -> FAILResponse(data = "@AGCEE-006 Impossible create a edge from ${this.accessGroup}")
-        }
-    }
-
-    private fun createAddEdgeFromRule(
-            vSource: GraphTraversal<Vertex, Vertex>, vTarget: GraphTraversal<Vertex, Vertex>, target: VertexInfo
-    ): JSONResponse {
-        try {
-            vSource.addE(EdgeLabel.ADD.label).to(vTarget).next()
-            graph.tx().commit()
-        } catch (e: Exception) {
-            graph.tx().rollback()
-            return FAILResponse(data = "@AGCEE-003 ${e.message.toString()}")
-        }
-        val vertexInfo = VertexInfo(VertexLabel.ACCESS_GROUP.label, this.accessGroup.code)
-        return SUCCESSResponse(data = EdgeCreated(target, vertexInfo, EdgeLabel.ADD.label))
-    }
-
-    private fun createRemoveEdgeFromRule(
-            vSource: GraphTraversal<Vertex, Vertex>, vTarget: GraphTraversal<Vertex, Vertex>, target: VertexInfo
-    ): JSONResponse {
-        try {
-            vSource.addE(EdgeLabel.REMOVE.label).to(vTarget).next()
-            graph.tx().commit()
-        } catch (e: Exception) {
-            graph.tx().rollback()
-            return FAILResponse(data = "@AGCEE-004 ${e.message.toString()}")
-        }
-        val vertexInfo = VertexInfo(VertexLabel.ACCESS_GROUP.label, this.accessGroup.code)
-        return SUCCESSResponse(data = EdgeCreated(vertexInfo, target, EdgeLabel.REMOVE.label))
-    }
-
-    private fun createInheritEdgeFromAccessGroup(
-            vSource: GraphTraversal<Vertex, Vertex>, vTarget: GraphTraversal<Vertex, Vertex>, target: VertexInfo
-    ): JSONResponse {
-        try {
-            vSource.addE(EdgeLabel.INHERIT.label).to(vTarget).next()
-            graph.tx().commit()
-        } catch (e: Exception) {
-            graph.tx().rollback()
-            return FAILResponse(data = "@AGCEE-005 ${e.message.toString()}")
-        }
-        val vertexInfo = VertexInfo(VertexLabel.ACCESS_GROUP.label, this.accessGroup.code)
-        return SUCCESSResponse(data = EdgeCreated(vertexInfo, target, EdgeLabel.INHERIT.label))
     }
 }

@@ -15,15 +15,15 @@ class RuleMapper (val properties: Map<String, String>): IMapper {
     private val graph = GraphFactory.open()
 
     override fun insert(): JSONResponse {
+        if (!RuleValidator().canInsertVertex(this.rule)) {
+            return FAILResponse(data = "@RCVE-001 Empty Rule properties")
+        }
         try {
-            if (!RuleValidator().canInsertVertex(this.rule)) {
-                return FAILResponse(data = "@RCVE-001 Empty Rule properties")
-            }
             val rule = graph.addVertex(VertexLabel.RULE.label)
             rule.property(PropertyLabel.NAME.label, this.rule.name)
             rule.property(PropertyLabel.CODE.label, this.rule.code)
             rule.property(PropertyLabel.CREATION_DATE.label, this.rule.creationDate)
-            rule.property(PropertyLabel.ENABLE.label, true)
+            rule.property(PropertyLabel.ENABLE.label, this.rule.enable)
             if (!this.rule.description.isEmpty()) {
                 rule.property(PropertyLabel.DESCRIPTION.label, this.rule.description)
             }
@@ -38,7 +38,7 @@ class RuleMapper (val properties: Map<String, String>): IMapper {
         return SUCCESSResponse(data = response)
     }
 
-    override fun createEdge(target: VertexInfo): JSONResponse {
+    override fun createEdge(target: VertexInfo, edgeTarget: String): JSONResponse {
         return FAILResponse(data = "@RCEE-001 Impossible create a edge with ${target.code}")
     }
 

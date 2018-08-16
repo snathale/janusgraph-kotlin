@@ -12,7 +12,7 @@ data class CreateAgentSuccess(val status: String, val data: AgentResponse)
 data class CreatePermissionSuccess(val status: String, val data: PermissionResponse)
 data class CreateAssociationSuccess(val status: String, val data: AssociationResponse)
 data class CreateEdgeSuccess(val status: String, val data: EdgeCreated)
-abstract class ApiControllerHerper {
+abstract class ApiControllerHelper {
 
     fun createVertexBaseUrl(port: Int): String {
         return "http://localhost:$port/api/v1/vertex"
@@ -201,6 +201,29 @@ abstract class ApiControllerHerper {
         val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
         val g = GraphFactory.open().traversal()
         val vertex = g.V().hasLabel("accessGroup").has("code", code)
+        val values = AbstractMapper.parseMapVertex(vertex)
+        Assert.assertEquals(format.format(creationDate), AbstractMapper.parseMapValueDate(values["creationDate"].toString()))
+        Assert.assertEquals(name, AbstractMapper.parseMapValue(values["name"].toString()))
+        Assert.assertEquals(code, AbstractMapper.parseMapValue(values["code"].toString()))
+        Assert.assertEquals(description, AbstractMapper.parseMapValue(values["description"].toString()))
+        Assert.assertEquals(enable, AbstractMapper.parseMapValue(values["enable"].toString()).toBoolean())
+    }
+
+    fun assertAccessGroupResponseSuccess(code: String, name: String, enable: Boolean, creationDate: Date, description: String, response: CreatePermissionSuccess) {
+        val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
+        val objDate = format.parse(response.data.creationDate)
+        Assert.assertEquals("SUCCESS", response.status)
+        Assert.assertEquals(format.format(creationDate), format.format(objDate))
+        Assert.assertEquals(code, response.data.code)
+        Assert.assertEquals(name, response.data.name)
+        Assert.assertEquals(enable, response.data.enable)
+        Assert.assertEquals(description, response.data.description)
+    }
+
+    fun assertRuleMapper(code: String, name: String, description: String, creationDate: Date, enable: Boolean) {
+        val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
+        val g = GraphFactory.open().traversal()
+        val vertex = g.V().hasLabel("rule").has("code", code)
         val values = AbstractMapper.parseMapVertex(vertex)
         Assert.assertEquals(format.format(creationDate), AbstractMapper.parseMapValueDate(values["creationDate"].toString()))
         Assert.assertEquals(name, AbstractMapper.parseMapValue(values["name"].toString()))
