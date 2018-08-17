@@ -1,8 +1,10 @@
 package br.com.ntopus.accesscontrol
 
 import br.com.ntopus.accesscontrol.helper.ApiControllerHelper
+
 import br.com.ntopus.accesscontrol.helper.CreateEdgeSuccess
 import br.com.ntopus.accesscontrol.helper.CreatePermissionSuccess
+import br.com.ntopus.accesscontrol.helper.IVertexTests
 import br.com.ntopus.accesscontrol.model.GraphFactory
 import br.com.ntopus.accesscontrol.model.data.Property
 import br.com.ntopus.accesscontrol.model.data.PropertyLabel
@@ -30,10 +32,10 @@ import org.springframework.http.HttpMethod
 import org.springframework.test.context.junit4.SpringRunner
 import java.text.SimpleDateFormat
 import java.util.*
-
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class ApiControllerAccessGroupTests: ApiControllerHelper() {
+class ApiControllerAccessGroupTests: ApiControllerHelper(), IVertexTests {
+
     @Autowired
     lateinit var restTemplate: TestRestTemplate
 
@@ -52,7 +54,7 @@ class ApiControllerAccessGroupTests: ApiControllerHelper() {
     }
 
     @Test
-    fun createAccessGroup() {
+    override fun createVertex() {
         val gson = Gson()
         val properties:List<Property> = listOf(Property("code", "2"),
                 Property("name", "New Access Group"),
@@ -78,7 +80,7 @@ class ApiControllerAccessGroupTests: ApiControllerHelper() {
     }
 
     @Test
-    fun createAccessGroupWithExtraProperty() {
+    override fun createVertexWithExtraProperty() {
         val gson = Gson()
         val properties:List<Property> = listOf(Property("code", "2"),
                 Property("name", "New Access Group"),
@@ -106,7 +108,7 @@ class ApiControllerAccessGroupTests: ApiControllerHelper() {
     }
 
     @Test
-    fun cantCreateAccessGroupThatExist() {
+    override fun cantCeateVertexThatExist() {
         val gson = Gson()
         val properties: List<Property> = listOf(
                 Property("code", "1"),
@@ -120,7 +122,7 @@ class ApiControllerAccessGroupTests: ApiControllerHelper() {
     }
 
     @Test
-    fun cantCreateAccessGroupWithRequiredPropertiesEmpty() {
+    override fun cantCreateVertexWithRequiredPropertyEmpty() {
         val gson = Gson()
         val code: List<Property> = listOf(Property("code", "2"))
         val accessGroup = VertexData("accessGroup", code)
@@ -142,7 +144,20 @@ class ApiControllerAccessGroupTests: ApiControllerHelper() {
     }
 
     @Test
-    fun cantCreateEdgeWithRuleThatNotExist() {
+    override fun cantCreateEdgeWithSourceThatNotExist() {
+        val source = VertexInfo("accessGroup", "2")
+        val target = VertexInfo("rule", "1")
+        val params: Map<String, Any> = hashMapOf("source" to source, "target" to target, "edgeLabel" to "inherit")
+        val response =  restTemplate.postForEntity("${this.createEdgeBaseUrl(this.port)}/add", params, String::class.java)
+        val gson = GsonBuilder().serializeNulls().create()
+        val obj = gson.fromJson(response.body, FAILResponse::class.java)
+        Assert.assertEquals("@AGCEE-002 Impossible find Access Group with code ${source.code}", obj.data)
+        val g = GraphFactory.open().traversal()
+        val v1 = g.V().hasLabel("accessGroup").has("code", "2")
+        Assert.assertFalse(v1.both().hasNext())
+    }
+
+    override fun cantCreateEdgeWithTargetThatNotExist() {
         val source = VertexInfo("accessGroup", "1")
         val target = VertexInfo("rule", "3")
         val params: Map<String, Any> = hashMapOf("source" to source, "target" to target, "edgeLabel" to "inherit")
@@ -152,8 +167,72 @@ class ApiControllerAccessGroupTests: ApiControllerHelper() {
         Assert.assertEquals("@AGCEE-003 Impossible find Rule with code ${target.code}", obj.data)
         val g = GraphFactory.open().traversal()
         val v1 = g.V().hasLabel("accessGroup").has("code", "1")
-        val v2 = g.V().hasLabel("rule").has("code", "3")
         Assert.assertFalse(v1.both().hasNext())
+    }
+
+    @Test
+    override fun createEdge() {
+        val source = VertexInfo("accessGroup", "1")
+        val target1 = VertexInfo("rule", "1")
+        val params1: Map<String, Any> = hashMapOf("source" to source, "target" to target1, "edgeLabel" to "add")
+        val edgeResponse1 =  restTemplate.postForEntity("${this.createEdgeBaseUrl(this.port)}/add", params1, String::class.java)
+        val gson = GsonBuilder().serializeNulls().create()
+        val edgeObj1: CreateEdgeSuccess = gson.fromJson(edgeResponse1.body, CreateEdgeSuccess::class.java)
+        this.assertEdgeCreatedSuccess(source, target1, edgeObj1, "add")
+        val g = GraphFactory.open().traversal()
+        val eSource1 = g.V().hasLabel("accessGroup").has("code", "1").next()
+        Assert.assertTrue(eSource1.edges(Direction.OUT, "add").hasNext())
+        val eTarget1 = g.V().hasLabel("rule").has("code", "1").next()
+        Assert.assertTrue(eTarget1.edges(Direction.IN, "add").hasNext())
+    }
+
+    @Test
+    override fun cantUpdateDefaultProperty() {
+        val properties : List<Property> = listOf(Property("name", "Operator Updated"), Property("code", "2"))
+        val requestUpdate = HttpEntity(properties)
+        val response = restTemplate.exchange(
+                "${this.createVertexBaseUrl(this.port)}/updateProperty/accessGroup/1", HttpMethod.PUT,
+                requestUpdate, String::class.java
+        )
+        val gson = GsonBuilder().serializeNulls().create()
+        val obj: FAILResponse = gson.fromJson(response.body, FAILResponse::class.java)
+        Assert.assertEquals("FAIL", obj.status)
+        Assert.assertEquals("@AGUPE-002 Access Group property can be updated", obj.data)
+    }
+
+    @Test
+    override fun cantUpdatePropertyFromVertexThatNotExist() {
+        val properties : List<Property> = listOf(Property("name", "Operator Updated"), Property("description", "Property updated"))
+        val requestUpdate = HttpEntity(properties)
+        val response = restTemplate.exchange(
+                "${this.createVertexBaseUrl(this.port)}/updateProperty/accessGroup/2", HttpMethod.PUT,
+                requestUpdate, String::class.java
+        )
+        val gson = GsonBuilder().serializeNulls().create()
+        val obj: FAILResponse = gson.fromJson(response.body, FAILResponse::class.java)
+        Assert.assertEquals("FAIL", obj.status)
+        Assert.assertEquals("AGUPE-001 Impossible find Access Group with code 2", obj.data)
+    }
+
+    @Test
+    override fun deleteVertex() {
+        val requestUpdate = HttpEntity("accessGroup")
+        val response = restTemplate.exchange("${this.createVertexBaseUrl(this.port)}/delete/1", HttpMethod.DELETE, requestUpdate, String::class.java)
+        val gson = GsonBuilder().serializeNulls().create()
+        val obj: SUCCESSResponse = gson.fromJson(response.body, SUCCESSResponse::class.java)
+        Assert.assertEquals("SUCCESS", obj.status)
+        Assert.assertEquals(null, obj.data)
+        this.assertAccessGroupMapper("1", "Operator", "This is a Operator Access Group", date, false)
+    }
+
+    @Test
+    override fun cantDeleteVertexThatNotExist() {
+        val requestUpdate = HttpEntity("accessGroup")
+        val response = restTemplate.exchange("${this.createVertexBaseUrl(this.port)}/delete/2", HttpMethod.DELETE, requestUpdate, String::class.java)
+        val gson = GsonBuilder().serializeNulls().create()
+        val obj: FAILResponse = gson.fromJson(response.body, FAILResponse::class.java)
+        Assert.assertEquals("FAIL", obj.status)
+        Assert.assertEquals("@AGDE-001 Impossible find Access Group with code 2", obj.data)
     }
 
     @Test
@@ -172,7 +251,7 @@ class ApiControllerAccessGroupTests: ApiControllerHelper() {
     }
 
     @Test
-    fun cantCreateEdgeWithIncorrectTarget() {
+    override fun cantCreateEdgeWithIncorrectTarget() {
         val source = VertexInfo("accessGroup", "1")
         val target = VertexInfo("user", "1")
         val params: Map<String, VertexInfo> = hashMapOf("source" to source, "target" to target)
@@ -185,22 +264,6 @@ class ApiControllerAccessGroupTests: ApiControllerHelper() {
         val v2 = g.V().hasLabel("user").has("code", "1")
         Assert.assertFalse(v1.out().hasNext())
         Assert.assertFalse(v2.`in`().hasNext())
-    }
-
-    @Test
-    fun createAddEdge() {
-        val source = VertexInfo("accessGroup", "1")
-        val target1 = VertexInfo("rule", "1")
-        val params1: Map<String, Any> = hashMapOf("source" to source, "target" to target1, "edgeLabel" to "add")
-        val edgeResponse1 =  restTemplate.postForEntity("${this.createEdgeBaseUrl(this.port)}/add", params1, String::class.java)
-        val gson = GsonBuilder().serializeNulls().create()
-        val edgeObj1: CreateEdgeSuccess = gson.fromJson(edgeResponse1.body, CreateEdgeSuccess::class.java)
-        this.assertEdgeCreatedSuccess(source, target1, edgeObj1, "add")
-        val g = GraphFactory.open().traversal()
-        val eSource1 = g.V().hasLabel("accessGroup").has("code", "1").next()
-        Assert.assertTrue(eSource1.edges(Direction.OUT, "add").hasNext())
-        val eTarget1 = g.V().hasLabel("rule").has("code", "1").next()
-        Assert.assertTrue(eTarget1.edges(Direction.IN, "add").hasNext())
     }
 
     @Test
@@ -268,7 +331,7 @@ class ApiControllerAccessGroupTests: ApiControllerHelper() {
     }
 
     @Test
-    fun updateProperty() {
+    override fun updateProperty() {
         val properties : List<Property> = listOf(Property("name", "Operator Updated"), Property("description", "Property updated"))
         val requestUpdate = HttpEntity(properties)
         val response = restTemplate.exchange("${this.createVertexBaseUrl(this.port)}/updateProperty/accessGroup/1", HttpMethod.PUT, requestUpdate, String::class.java)
@@ -276,54 +339,5 @@ class ApiControllerAccessGroupTests: ApiControllerHelper() {
         val objResponse = gson.fromJson(response.body, CreatePermissionSuccess::class.java)
         this.assertAccessGroupResponseSuccess("1", "Operator Updated",true, date, "Property updated", objResponse)
         this.assertAccessGroupMapper("1", "Operator Updated", "Property updated", date, true)
-    }
-
-    @Test
-    fun cantUpdateAccessGroupDefaultProperty() {
-        val properties : List<Property> = listOf(Property("name", "Operator Updated"), Property("code", "2"))
-        val requestUpdate = HttpEntity(properties)
-        val response = restTemplate.exchange(
-                "${this.createVertexBaseUrl(this.port)}/updateProperty/accessGroup/1", HttpMethod.PUT,
-                requestUpdate, String::class.java
-        )
-        val gson = GsonBuilder().serializeNulls().create()
-        val obj: FAILResponse = gson.fromJson(response.body, FAILResponse::class.java)
-        Assert.assertEquals("FAIL", obj.status)
-        Assert.assertEquals("@AGUPE-002 Access Group property can be updated", obj.data)
-    }
-
-    @Test
-    fun cantUpdateAccessGroupThatNotExist() {
-        val properties : List<Property> = listOf(Property("name", "Operator Updated"), Property("description", "Property updated"))
-        val requestUpdate = HttpEntity(properties)
-        val response = restTemplate.exchange(
-                "${this.createVertexBaseUrl(this.port)}/updateProperty/accessGroup/2", HttpMethod.PUT,
-                requestUpdate, String::class.java
-        )
-        val gson = GsonBuilder().serializeNulls().create()
-        val obj: FAILResponse = gson.fromJson(response.body, FAILResponse::class.java)
-        Assert.assertEquals("FAIL", obj.status)
-        Assert.assertEquals("AGUPE-001 Impossible find Access Group with code 2", obj.data)
-    }
-
-    @Test
-    fun deleteAccessGroup() {
-        val requestUpdate = HttpEntity("accessGroup")
-        val response = restTemplate.exchange("${this.createVertexBaseUrl(this.port)}/delete/1", HttpMethod.DELETE, requestUpdate, String::class.java)
-        val gson = GsonBuilder().serializeNulls().create()
-        val obj: SUCCESSResponse = gson.fromJson(response.body, SUCCESSResponse::class.java)
-        Assert.assertEquals("SUCCESS", obj.status)
-        Assert.assertEquals(null, obj.data)
-        this.assertAccessGroupMapper("1", "Operator", "This is a Operator Access Group", date, false)
-    }
-
-    @Test
-    fun cantDeleteOrganizationThatNotExist() {
-        val requestUpdate = HttpEntity("accessGroup")
-        val response = restTemplate.exchange("${this.createVertexBaseUrl(this.port)}/delete/2", HttpMethod.DELETE, requestUpdate, String::class.java)
-        val gson = GsonBuilder().serializeNulls().create()
-        val obj: FAILResponse = gson.fromJson(response.body, FAILResponse::class.java)
-        Assert.assertEquals("FAIL", obj.status)
-        Assert.assertEquals("@AGDE-001 Impossible find Access Group with code 2", obj.data)
     }
 }

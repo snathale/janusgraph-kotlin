@@ -39,7 +39,7 @@ class RuleMapper (val properties: Map<String, String>): IMapper {
     }
 
     override fun createEdge(target: VertexInfo, edgeTarget: String): JSONResponse {
-        return FAILResponse(data = "@RCEE-001 Impossible create a edge with ${target.code}")
+        return FAILResponse(data = "@RCEE-001 Impossible create a edge with target code ${target.code}")
     }
 
     override fun updateProperty(properties: List<Property>): JSONResponse {

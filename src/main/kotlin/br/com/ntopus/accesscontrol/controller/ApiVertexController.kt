@@ -2,6 +2,7 @@ package br.com.ntopus.accesscontrol.controller
 
 import br.com.ntopus.accesscontrol.factory.MapperFactory
 import br.com.ntopus.accesscontrol.model.GraphFactory
+import br.com.ntopus.accesscontrol.model.StatusResponse
 import br.com.ntopus.accesscontrol.model.data.Property
 import br.com.ntopus.accesscontrol.model.data.PropertyLabel
 import br.com.ntopus.accesscontrol.model.data.VertexData
@@ -10,6 +11,8 @@ import com.google.gson.Gson
 import org.apache.tinkerpop.gremlin.structure.Vertex
 import org.springframework.web.bind.annotation.*
 import com.google.gson.GsonBuilder
+import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
 
 @RestController
 @RequestMapping("api/v1/vertex")
@@ -17,37 +20,52 @@ class ApiVertexController {
 
     val graph = GraphFactory.open()
     @PostMapping("/add")
-    fun addVertex(@RequestBody vertex: VertexData): String {
+    fun addVertex(@RequestBody vertex: VertexData): ResponseEntity<Any> {
         var gson = Gson()
-        return try {
+        try {
             gson = GsonBuilder().serializeNulls().create()
-            return  gson.toJson(MapperFactory.createFactory(vertex).insert())
+            val response = MapperFactory.createFactory(vertex).insert()
+            if (response.status == StatusResponse.FAIL.toString()) {
+                return ResponseEntity(gson.toJson(response), HttpStatus.NOT_FOUND)
+            }
+            return ResponseEntity(gson.toJson(response), HttpStatus.OK)
         } catch (e: Exception) {
-            gson.toJson(ERRORResponse(message = "@ACIE-001 Impossible create a Vertex ${e.message}"))
+            val response = ERRORResponse(message = "@ACIE-001 Impossible create a Vertex ${e.message}")
+            return ResponseEntity(gson.toJson(response), HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
 
     @PutMapping("/updateProperty/{label}/{code}")
-    fun updateVertexProperty(@PathVariable label: String, @PathVariable code: String, @RequestBody properties: List<Property>): String {
+    fun updateVertexProperty(@PathVariable label: String, @PathVariable code: String, @RequestBody properties: List<Property>): ResponseEntity<Any> {
         var gson = Gson()
         val vertex = VertexData(label, listOf(Property(PropertyLabel.CODE.label, code)))
-        return try {
+        try {
             gson = GsonBuilder().serializeNulls().create()
-            return  gson.toJson(MapperFactory.createFactory(vertex).updateProperty(properties))
+            val response = MapperFactory.createFactory(vertex).updateProperty(properties)
+            if (response.status == StatusResponse.FAIL.toString()) {
+                return ResponseEntity(gson.toJson(response), HttpStatus.NOT_FOUND)
+            }
+            return ResponseEntity(gson.toJson(response), HttpStatus.OK)
         } catch (e: Exception) {
-            gson.toJson(ERRORResponse(message = "@ACUPV-001 Impossible update Vertex Property ${e.message}"))
+            val response = ERRORResponse(message = "@ACUPV-001 Impossible update Vertex Property ${e.message}")
+            return ResponseEntity(gson.toJson(response), HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
 
     @DeleteMapping("/delete/{code}")
-    fun deleteVertex(@PathVariable code: String, @RequestBody vertex: String): String {
+    fun deleteVertex(@PathVariable code: String, @RequestBody vertex: String): ResponseEntity<Any> {
         var gson = Gson()
         val vertexData = VertexData(vertex, listOf(Property(PropertyLabel.CODE.label, code)))
-        return try {
+        try {
             gson = GsonBuilder().serializeNulls().create()
-            return  gson.toJson(MapperFactory.createFactory(vertexData).delete())
+            val response = MapperFactory.createFactory(vertexData).delete()
+            if (response.status == StatusResponse.FAIL.toString()) {
+                return ResponseEntity(gson.toJson(response), HttpStatus.NOT_FOUND)
+            }
+            return ResponseEntity(gson.toJson(response), HttpStatus.OK)
         } catch (e: Exception) {
-            gson.toJson(ERRORResponse(message = "@ACDV-001 Impossible delete Vertex Property ${e.message}"))
+            val response = ERRORResponse(message = "@ACDV-001 Impossible delete Vertex Property ${e.message}")
+            return ResponseEntity(gson.toJson(response), HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
 

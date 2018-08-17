@@ -3,6 +3,7 @@ package br.com.ntopus.accesscontrol
 import br.com.ntopus.accesscontrol.helper.ApiControllerHelper
 import br.com.ntopus.accesscontrol.helper.CreateEdgeSuccess
 import br.com.ntopus.accesscontrol.helper.CreateAgentSuccess
+import br.com.ntopus.accesscontrol.helper.IVertexTests
 import br.com.ntopus.accesscontrol.model.GraphFactory
 import br.com.ntopus.accesscontrol.model.data.Property
 import br.com.ntopus.accesscontrol.model.data.PropertyLabel
@@ -33,7 +34,7 @@ import java.util.*
 
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class ApiControllerOrganizationTests: ApiControllerHelper() {
+class ApiControllerOrganizationTests: ApiControllerHelper(), IVertexTests {
     @Autowired
     lateinit var restTemplate: TestRestTemplate
 
@@ -53,9 +54,8 @@ class ApiControllerOrganizationTests: ApiControllerHelper() {
     }
 
     @Test
-    fun createOrganization() {
+    override fun createVertex() {
         val gson = Gson()
-        val initialDate = Date()
         val properties:List<Property> = listOf(Property("code", "2"),
                 Property("name", "New Organization"),
                 Property("observation", "This is a observation"))
@@ -64,7 +64,8 @@ class ApiControllerOrganizationTests: ApiControllerHelper() {
         val obj: CreateAgentSuccess = gson.fromJson(response.body, CreateAgentSuccess::class.java)
         val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
         val finalDate = format.parse(obj.data.creationDate)
-//        Assert.assertTrue(initialDate.before(finalDate))
+        Assert.assertEquals(200, response.statusCode.value())
+        Assert.assertEquals("SUCCESS", obj.status)
         Assert.assertNotNull(finalDate)
         Assert.assertEquals("New Organization", obj.data.name)
         Assert.assertEquals("2", obj.data.code)
@@ -80,62 +81,43 @@ class ApiControllerOrganizationTests: ApiControllerHelper() {
     }
 
     @Test
-    fun createOrganizationWithPropertyDuplicated() {
+    override fun createVertexWithExtraProperty() {
         val gson = Gson()
-        val initialDate = Date()
         val properties:List<Property> = listOf(Property("code", "2"),
                 Property("name", "New Organization"),
-                Property("name", "New Organization 2"),
+                Property("description", "This is a description"),
                 Property("observation", "This is a observation"))
         val organization = VertexData("organization", properties)
         val response =  restTemplate.postForEntity("${this.createVertexBaseUrl(this.port)}/add", organization, String::class.java)
         val obj: CreateAgentSuccess = gson.fromJson(response.body, CreateAgentSuccess::class.java)
         val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
         val finalDate = format.parse(obj.data.creationDate)
-//        Assert.assertTrue(initialDate.before(finalDate))
+        Assert.assertEquals(200, response.statusCode.value())
+        Assert.assertEquals("SUCCESS", obj.status)
         Assert.assertNotNull(finalDate)
-        Assert.assertEquals("New Organization 2", obj.data.name)
+        Assert.assertEquals("New Organization", obj.data.name)
         Assert.assertEquals("2", obj.data.code)
         Assert.assertEquals("This is a observation", obj.data.observation)
         Assert.assertEquals(true, obj.data.enable)
         val g = GraphFactory.open().traversal()
         val userStorage = g.V().hasLabel(VertexLabel.ORGANIZATION.label).has(PropertyLabel.CODE.label, "2")
         val values = AbstractMapper.parseMapVertex(userStorage)
-        Assert.assertEquals("New Organization 2", AbstractMapper.parseMapValue(values["name"].toString()))
+        Assert.assertEquals("New Organization", AbstractMapper.parseMapValue(values["name"].toString()))
         Assert.assertEquals("2", AbstractMapper.parseMapValue(values["code"].toString()))
         Assert.assertEquals("This is a observation", AbstractMapper.parseMapValue(values["observation"].toString()))
+        Assert.assertEquals("", AbstractMapper.parseMapValue(values["description"].toString()))
         Assert.assertEquals(true, AbstractMapper.parseMapValue(values["enable"].toString()).toBoolean())
     }
 
     @Test
-    fun cantCreateOrganizationWithRequiredPropertiesEmpty() {
-        val gson = Gson()
-        val code: List<Property> = listOf(Property("code", "2"))
-        val organization = VertexData("organization", code)
-        val response =  restTemplate.postForEntity("${this.createVertexBaseUrl(this.port)}/add", organization, String::class.java)
-        val obj = gson.fromJson(response.body, FAILResponse::class.java)
-        Assert.assertEquals("@OCVE-001 Empty Organization properties", obj.data)
-        val g = GraphFactory.open().traversal()
-        val organizationStorage = g.V().hasLabel(VertexLabel.ORGANIZATION.label).has(PropertyLabel.CODE.label, "2")
-        val values = AbstractMapper.parseMapVertex(organizationStorage)
-        Assert.assertEquals(0, values.size)
-        val name: List<Property> = listOf(Property("name", "test"))
-        val organization1 = VertexData("organization", name)
-        val response1 =  restTemplate.postForEntity("${this.createVertexBaseUrl(this.port)}/add", organization1, String::class.java)
-        val obj1 = gson.fromJson(response1.body, FAILResponse::class.java)
-        Assert.assertEquals("@OCVE-001 Empty Organization properties", obj1.data)
-        val organizationStorage1 = g.V().hasLabel(VertexLabel.ORGANIZATION.label).has(PropertyLabel.CODE.label, "2")
-        val values1 = AbstractMapper.parseMapVertex(organizationStorage1)
-        Assert.assertEquals(0, values1.size)
-    }
-
-    @Test
-    fun cantCreateOrganizationThatExist() {
+    override fun cantCeateVertexThatExist() {
         val gson = Gson()
         val properties: List<Property> = listOf(Property("code", "1"), Property("name", "Test"))
         val organization = VertexData("organization", properties)
         val response =  restTemplate.postForEntity("${this.createVertexBaseUrl(this.port)}/add", organization, String::class.java)
         val obj = gson.fromJson(response.body, FAILResponse::class.java)
+        Assert.assertEquals(404, response.statusCode.value())
+        Assert.assertEquals("FAIL", obj.status)
         Assert.assertEquals("@OCVE-002 Adding this property for key [code] and value [1] violates a uniqueness constraint [vByOrganizationCode]", obj.data)
         val g = GraphFactory.open().traversal()
         val organizationStorage = g.V().hasLabel(VertexLabel.ORGANIZATION.label).has(PropertyLabel.CODE.label, "1")
@@ -148,43 +130,72 @@ class ApiControllerOrganizationTests: ApiControllerHelper() {
     }
 
     @Test
-    fun cantCreateEdgeWithTargetThatNotExist() {
-        val source = VertexInfo("organization", "1")
-        val target = VertexInfo("unitOrganization", "2")
-        val params: Map<String, VertexInfo> = hashMapOf("source" to source, "target" to target)
-        val response =  restTemplate.postForEntity("${this.createEdgeBaseUrl(this.port)}/add", params, String::class.java)
-        val gson = GsonBuilder().serializeNulls().create()
+    override fun cantCreateVertexWithRequiredPropertyEmpty() {
+        val gson = Gson()
+        val code: List<Property> = listOf(Property("code", "2"))
+        val organization = VertexData("organization", code)
+        val response =  restTemplate.postForEntity("${this.createVertexBaseUrl(this.port)}/add", organization, String::class.java)
         val obj = gson.fromJson(response.body, FAILResponse::class.java)
-        Assert.assertEquals("@OCEE-003 Impossible find Unit Organization with code ${target.code}", obj.data)
+        Assert.assertEquals(404, response.statusCode.value())
+        Assert.assertEquals("FAIL", obj.status)
+        Assert.assertEquals("@OCVE-001 Empty Organization properties", obj.data)
         val g = GraphFactory.open().traversal()
-        val unitOrganization = g.V().hasLabel(VertexLabel.ACCESS_RULE.label).has(PropertyLabel.CODE.label, "2").next()
-        Assert.assertFalse(unitOrganization.edges(Direction.OUT, "has").hasNext())
+        val organizationStorage = g.V().hasLabel(VertexLabel.ORGANIZATION.label).has(PropertyLabel.CODE.label, "2")
+        val values = AbstractMapper.parseMapVertex(organizationStorage)
+        Assert.assertEquals(0, values.size)
+        val name: List<Property> = listOf(Property("name", "test"))
+        val organization1 = VertexData("organization", name)
+        val response1 =  restTemplate.postForEntity("${this.createVertexBaseUrl(this.port)}/add", organization1, String::class.java)
+        val obj1 = gson.fromJson(response1.body, FAILResponse::class.java)
+        Assert.assertEquals(404, response.statusCode.value())
+        Assert.assertEquals("FAIL", obj.status)
+        Assert.assertEquals("@OCVE-001 Empty Organization properties", obj1.data)
+        val organizationStorage1 = g.V().hasLabel(VertexLabel.ORGANIZATION.label).has(PropertyLabel.CODE.label, "2")
+        val values1 = AbstractMapper.parseMapVertex(organizationStorage1)
+        Assert.assertEquals(0, values1.size)
     }
 
     @Test
-    fun canCreateEdgeWithOrganizationThatNotExist() {
+    override fun cantCreateEdgeWithSourceThatNotExist() {
         val source = VertexInfo("organization", "2")
         val target = VertexInfo("unitOrganization", "1")
         val params: Map<String, VertexInfo> = hashMapOf("source" to source, "target" to target)
         val response =  restTemplate.postForEntity("${this.createEdgeBaseUrl(this.port)}/add", params, String::class.java)
         val gson = GsonBuilder().serializeNulls().create()
         val obj: FAILResponse = gson.fromJson(response.body, FAILResponse::class.java)
+        Assert.assertEquals(404, response.statusCode.value())
         Assert.assertEquals("FAIL", obj.status)
         Assert.assertEquals("@OCEE-002 Impossible find Organization with code ${source.code}", obj.data)
         val g = GraphFactory.open().traversal()
         val organization = g.V().hasLabel(VertexLabel.ORGANIZATION.label).has(PropertyLabel.CODE.label, "2")
-        val values = AbstractMapper.parseMapVertex(organization)
-        Assert.assertEquals(0, values.size)
+        Assert.assertFalse(organization.both().hasNext())
     }
 
     @Test
-    fun createOrganizationEdge() {
+    override fun cantCreateEdgeWithIncorrectTarget() {
+        val source = VertexInfo("organization", "1")
+        val target = VertexInfo("group", "1")
+        val params: Map<String, VertexInfo> = hashMapOf("source" to source, "target" to target)
+        val response =  restTemplate.postForEntity("${this.createEdgeBaseUrl(this.port)}/add", params, String::class.java)
+        val gson = GsonBuilder().serializeNulls().create()
+        val obj: FAILResponse = gson.fromJson(response.body, FAILResponse::class.java)
+        Assert.assertEquals(404, response.statusCode.value())
+        Assert.assertEquals("FAIL", obj.status)
+        Assert.assertEquals("@OCEE-001 Impossible create this edge with target code 1", obj.data)
+        val g = GraphFactory.open().traversal()
+        val organization = g.V().hasLabel(VertexLabel.ORGANIZATION.label).has(PropertyLabel.CODE.label, "1")
+        Assert.assertFalse(organization.both().hasNext())
+    }
+
+    @Test
+    override fun createEdge() {
         val source = VertexInfo("organization", "1")
         val target = VertexInfo("unitOrganization", "1")
         val params: Map<String, VertexInfo> = hashMapOf("source" to source, "target" to target)
         val edgeResponse =  restTemplate.postForEntity("${this.createEdgeBaseUrl(this.port)}/add", params, String::class.java)
         val gson = GsonBuilder().serializeNulls().create()
         val edgeObj: CreateEdgeSuccess = gson.fromJson(edgeResponse.body, CreateEdgeSuccess::class.java)
+        Assert.assertEquals(200, edgeResponse.statusCode.value())
         Assert.assertEquals("SUCCESS", edgeObj.status)
         Assert.assertEquals("organization", edgeObj.data.source.label)
         Assert.assertEquals("1", edgeObj.data.source.code)
@@ -205,12 +216,13 @@ class ApiControllerOrganizationTests: ApiControllerHelper() {
     }
 
     @Test
-    fun updateOrganizationProperty() {
+    override fun updateProperty() {
         val properties : List<Property> = listOf(Property("name", "Organization Test"), Property("observation", "Property updated"))
         val requestUpdate = HttpEntity(properties)
         val response = restTemplate.exchange("${this.createVertexBaseUrl(this.port)}/updateProperty/organization/1", HttpMethod.PUT, requestUpdate, String::class.java)
         val gson = GsonBuilder().serializeNulls().create()
         val obj: CreateAgentSuccess = gson.fromJson(response.body, CreateAgentSuccess::class.java)
+        Assert.assertEquals(200, response.statusCode.value())
         Assert.assertEquals("SUCCESS", obj.status)
         Assert.assertEquals("Organization Test", obj.data.name)
         Assert.assertEquals("1", obj.data.code)
@@ -227,7 +239,7 @@ class ApiControllerOrganizationTests: ApiControllerHelper() {
     }
 
     @Test
-    fun cantUpdateOrganizationDefaultProperty() {
+    override fun cantUpdateDefaultProperty() {
         val properties : List<Property> = listOf(Property("name", "Organization Test"), Property("code", "2"))
         val requestUpdate = HttpEntity(properties)
         val response = restTemplate.exchange(
@@ -236,16 +248,33 @@ class ApiControllerOrganizationTests: ApiControllerHelper() {
         )
         val gson = GsonBuilder().serializeNulls().create()
         val obj: FAILResponse = gson.fromJson(response.body, FAILResponse::class.java)
+        Assert.assertEquals(404, response.statusCode.value())
         Assert.assertEquals("FAIL", obj.status)
         Assert.assertEquals("@OUPE-002 Organization property can be updated", obj.data)
     }
 
     @Test
-    fun deleteOrganization() {
+    override fun cantUpdatePropertyFromVertexThatNotExist() {
+        val properties : List<Property> = listOf(Property("name", "New Organization Test"), Property("code", "1"))
+        val requestUpdate = HttpEntity(properties)
+        val response = restTemplate.exchange(
+                "${this.createVertexBaseUrl(this.port)}/updateProperty/organization/2", HttpMethod.PUT,
+                requestUpdate, String::class.java
+        )
+        val gson = GsonBuilder().serializeNulls().create()
+        val obj: FAILResponse = gson.fromJson(response.body, FAILResponse::class.java)
+        Assert.assertEquals(404, response.statusCode.value())
+        Assert.assertEquals("FAIL", obj.status)
+        Assert.assertEquals("@OUPE-001 Impossible find Organization with code 2", obj.data)
+    }
+
+    @Test
+    override fun deleteVertex() {
         val requestUpdate = HttpEntity("organization")
         val response = restTemplate.exchange("${this.createVertexBaseUrl(this.port)}/delete/1", HttpMethod.DELETE, requestUpdate, String::class.java)
         val gson = GsonBuilder().serializeNulls().create()
         val obj: SUCCESSResponse = gson.fromJson(response.body, SUCCESSResponse::class.java)
+        Assert.assertEquals(200, response.statusCode.value())
         Assert.assertEquals("SUCCESS", obj.status)
         Assert.assertEquals(null, obj.data)
         val g = GraphFactory.open().traversal()
@@ -259,12 +288,29 @@ class ApiControllerOrganizationTests: ApiControllerHelper() {
     }
 
     @Test
-    fun cantDeleteOrganizationThatNotExist() {
+    override fun cantDeleteVertexThatNotExist() {
         val requestUpdate = HttpEntity("organization")
         val response = restTemplate.exchange("${this.createVertexBaseUrl(this.port)}/delete/2", HttpMethod.DELETE, requestUpdate, String::class.java)
         val gson = GsonBuilder().serializeNulls().create()
         val obj: FAILResponse = gson.fromJson(response.body, FAILResponse::class.java)
+        Assert.assertEquals(404, response.statusCode.value())
         Assert.assertEquals("FAIL", obj.status)
         Assert.assertEquals("@ODE-001 Impossible find Organization with code 2", obj.data)
+    }
+
+    @Test
+    override fun cantCreateEdgeWithTargetThatNotExist() {
+        val source = VertexInfo("organization", "1")
+        val target = VertexInfo("unitOrganization", "2")
+        val params: Map<String, VertexInfo> = hashMapOf("source" to source, "target" to target)
+        val response =  restTemplate.postForEntity("${this.createEdgeBaseUrl(this.port)}/add", params, String::class.java)
+        val gson = GsonBuilder().serializeNulls().create()
+        val obj = gson.fromJson(response.body, FAILResponse::class.java)
+        Assert.assertEquals(404, response.statusCode.value())
+        Assert.assertEquals("FAIL", obj.status)
+        Assert.assertEquals("@OCEE-003 Impossible find Unit Organization with code ${target.code}", obj.data)
+        val g = GraphFactory.open().traversal()
+        val unitOrganization = g.V().hasLabel(VertexLabel.ORGANIZATION.label).has(PropertyLabel.CODE.label, "1").next()
+        Assert.assertFalse(unitOrganization.edges(Direction.OUT, "has").hasNext())
     }
 }

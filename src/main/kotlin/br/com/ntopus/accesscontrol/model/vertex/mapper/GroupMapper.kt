@@ -1,6 +1,7 @@
 package br.com.ntopus.accesscontrol.model.vertex.mapper
 
 import br.com.ntopus.accesscontrol.model.GraphFactory
+import br.com.ntopus.accesscontrol.model.data.EdgeLabel
 import br.com.ntopus.accesscontrol.model.data.Property
 import br.com.ntopus.accesscontrol.model.data.PropertyLabel
 import br.com.ntopus.accesscontrol.model.data.VertexLabel
@@ -9,6 +10,7 @@ import br.com.ntopus.accesscontrol.model.vertex.base.FAILResponse
 import br.com.ntopus.accesscontrol.model.vertex.base.JSONResponse
 import br.com.ntopus.accesscontrol.model.vertex.base.SUCCESSResponse
 import br.com.ntopus.accesscontrol.model.vertex.validator.GroupValidator
+import br.com.ntopus.accesscontrol.model.vertex.validator.UserValidator
 
 class GroupMapper (val properties: Map<String, String>): IMapper {
     private val group = Group(properties)
@@ -81,6 +83,22 @@ class GroupMapper (val properties: Map<String, String>): IMapper {
     }
 
     override fun createEdge(target: VertexInfo, edgeTarget: String): JSONResponse {
-        return FAILResponse(data = "@GCEE-001 Impossible create a edge from this vertex")
+        if (!GroupValidator().isCorrectVertexTarget(target)) {
+            return FAILResponse(data = "@GCEE-001 Impossible create edge with target code ${target.code}")
+        }
+        val vSource = GroupValidator().hasVertex(this.group.code)
+                ?: return FAILResponse(data = "@GCEE-002 Impossible find Group with code ${this.group.code}")
+
+        val vTarget = GroupValidator().hasVertexTarget(target)
+                ?: return FAILResponse(data ="@GCEE-003 Impossible find Group with code ${target.code}")
+        try {
+            vSource.addEdge(EdgeLabel.HAS.label, vTarget)
+            graph.tx().commit()
+        } catch (e: Exception) {
+            graph.tx().rollback()
+            return FAILResponse(data = "@GCEE-004 ${e.message.toString()}")
+        }
+        val response = EdgeCreated(VertexInfo(VertexLabel.GROUP.label, this.group.code), target, EdgeLabel.HAS.label)
+        return SUCCESSResponse(data = response)
     }
 }

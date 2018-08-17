@@ -8,9 +8,21 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal
 import org.apache.tinkerpop.gremlin.structure.Vertex
 
 class GroupValidator : DefaultValidator() {
+    override fun isCorrectVertexTarget(target: VertexInfo): Boolean {
+        return target.label == VertexLabel.GROUP.label
+    }
+
     override fun hasVertex(code: String): Vertex? {
         return try {
             graph.traversal().V().hasLabel(VertexLabel.GROUP.label).has(PropertyLabel.CODE.label, code).next()
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    override fun hasVertexTarget(target: VertexInfo): Vertex? {
+        return try {
+            graph.traversal().V().hasLabel(VertexLabel.GROUP.label).has(PropertyLabel.CODE.label, target.code).next()
         } catch (e: Exception) {
             null
         }

@@ -3,6 +3,7 @@ package br.com.ntopus.accesscontrol
 import br.com.ntopus.accesscontrol.helper.ApiControllerHelper
 import br.com.ntopus.accesscontrol.helper.CreateAssociationSuccess
 import br.com.ntopus.accesscontrol.helper.CreateEdgeSuccess
+import br.com.ntopus.accesscontrol.helper.IVertexTests
 import br.com.ntopus.accesscontrol.model.GraphFactory
 import br.com.ntopus.accesscontrol.model.data.Property
 import br.com.ntopus.accesscontrol.model.data.PropertyLabel
@@ -33,7 +34,8 @@ import java.util.*
 
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class ApiControllerAccessRuleTests: ApiControllerHelper() {
+class ApiControllerAccessRuleTests: ApiControllerHelper(), IVertexTests {
+
     @Autowired
     lateinit var restTemplate: TestRestTemplate
 
@@ -56,7 +58,7 @@ class ApiControllerAccessRuleTests: ApiControllerHelper() {
     }
 
     @Test
-    fun createAccessRuleWithExpirationDate() {
+    override fun createVertex() {
         val gson = Gson()
         val expirationDate = this.addDays(Date(), 1)
         val properties:List<Property> = listOf(
@@ -90,7 +92,45 @@ class ApiControllerAccessRuleTests: ApiControllerHelper() {
     }
 
     @Test
-    fun cantCreateAccessRuleWithRequiredPropertiesEmpty() {
+    override fun createVertexWithExtraProperty() {
+        val gson = Gson()
+        val properties:List<Property> = listOf(
+                Property("code", "2"),
+                Property("enable", "true"),
+                Property("name", "Access Rule"))
+        val accessRule = VertexData("accessRule", properties)
+        val response =  restTemplate.postForEntity("${this.createVertexBaseUrl(this.port)}/add", accessRule, String::class.java)
+        val obj: CreateAssociationSuccess = gson.fromJson(response.body, CreateAssociationSuccess::class.java)
+        Assert.assertEquals(null, obj.data.expirationDate)
+        Assert.assertEquals("2", obj.data.code)
+        Assert.assertEquals(true, obj.data.enable)
+        val g = GraphFactory.open().traversal()
+        val userStorage = g.V().hasLabel(VertexLabel.ACCESS_RULE.label).has(PropertyLabel.CODE.label, "2")
+        val values = AbstractMapper.parseMapVertex(userStorage)
+        Assert.assertEquals("", AbstractMapper.parseMapValue(values["expirationDate"].toString()))
+        Assert.assertEquals("2", AbstractMapper.parseMapValue(values["code"].toString()))
+        Assert.assertEquals(true, AbstractMapper.parseMapValue(values["enable"].toString()).toBoolean())
+        Assert.assertEquals("", AbstractMapper.parseMapValue(values["name"].toString()))
+    }
+
+    @Test
+    override fun cantCeateVertexThatExist() {
+        val gson = Gson()
+        val properties: List<Property> = listOf(Property("code", "1"), Property("expirationDate", format.format(this.date)))
+        val accessRule = VertexData("accessRule", properties)
+        val response =  restTemplate.postForEntity("${this.createVertexBaseUrl(this.port)}/add", accessRule, String::class.java)
+        val obj = gson.fromJson(response.body, FAILResponse::class.java)
+        Assert.assertEquals("@ARCVE-002 Adding this property for key [code] and value [1] violates a uniqueness constraint [vByAccessRuleCode]", obj.data)
+        val g = GraphFactory.open().traversal()
+        val accessRuleStorage = g.V().hasLabel("accessRule").has("code", "1")
+        val values = AbstractMapper.parseMapVertex(accessRuleStorage)
+        Assert.assertEquals("1", AbstractMapper.parseMapValue(values["code"].toString()))
+        Assert.assertEquals(format.format(this.date), AbstractMapper.parseMapValueDate(values["expirationDate"].toString()))
+        Assert.assertEquals(true, AbstractMapper.parseMapValue(values["enable"].toString()).toBoolean())
+    }
+
+    @Test
+    override fun cantCreateVertexWithRequiredPropertyEmpty() {
         val gson = Gson()
         val enable: List<Property> = listOf(Property("enable", "true"))
         val accessRule = VertexData("accessRule", enable)
@@ -116,25 +156,23 @@ class ApiControllerAccessRuleTests: ApiControllerHelper() {
         Assert.assertEquals("1", AbstractMapper.parseMapValue(values1["code"].toString()))
         Assert.assertEquals(true, AbstractMapper.parseMapValue(values1["enable"].toString()).toBoolean())
     }
-    
+
     @Test
-    fun cantCreateAccessRuleThatExist() {
-        val gson = Gson()
-        val properties: List<Property> = listOf(Property("code", "1"), Property("expirationDate", format.format(this.date)))
-        val accessRule = VertexData("accessRule", properties)
-        val response =  restTemplate.postForEntity("${this.createVertexBaseUrl(this.port)}/add", accessRule, String::class.java)
+    override fun cantCreateEdgeWithSourceThatNotExist() {
+        val source = VertexInfo("accessRule", "2")
+        val target = VertexInfo("group", "1")
+        val params: Map<String, VertexInfo> = hashMapOf("source" to source, "target" to target)
+        val response =  restTemplate.postForEntity("${this.createEdgeBaseUrl(this.port)}/add", params, String::class.java)
+        val gson = GsonBuilder().serializeNulls().create()
         val obj = gson.fromJson(response.body, FAILResponse::class.java)
-        Assert.assertEquals("@ARCVE-002 Adding this property for key [code] and value [1] violates a uniqueness constraint [vByAccessRuleCode]", obj.data)
+        Assert.assertEquals("@ARCEE-002 Impossible find Access Rule with code 2", obj.data)
         val g = GraphFactory.open().traversal()
-        val accessRuleStorage = g.V().hasLabel("accessRule").has("code", "1")
-        val values = AbstractMapper.parseMapVertex(accessRuleStorage)
-        Assert.assertEquals("1", AbstractMapper.parseMapValue(values["code"].toString()))
-        Assert.assertEquals(format.format(this.date), AbstractMapper.parseMapValueDate(values["expirationDate"].toString()))
-        Assert.assertEquals(true, AbstractMapper.parseMapValue(values["enable"].toString()).toBoolean())
+        val unitOrganization = g.V().hasLabel("accessRule").has("code", "1").next()
+        Assert.assertFalse(unitOrganization.edges(Direction.OUT, "provide").hasNext())
     }
 
     @Test
-    fun cantCreateEdgeWithAccessGroupThatNotExist() {
+    override fun cantCreateEdgeWithTargetThatNotExist() {
         val source = VertexInfo("accessRule", "1")
         val target = VertexInfo("accessGroup", "2")
         val params: Map<String, VertexInfo> = hashMapOf("source" to source, "target" to target)
@@ -190,36 +228,7 @@ class ApiControllerAccessRuleTests: ApiControllerHelper() {
     }
 
     @Test
-    fun cantCreateEdgeWithAccessRuleThatNotExist() {
-        val source = VertexInfo("accessRule", "2")
-        val target = VertexInfo("group", "1")
-        val params: Map<String, VertexInfo> = hashMapOf("source" to source, "target" to target)
-        val response =  restTemplate.postForEntity("${this.createEdgeBaseUrl(this.port)}/add", params, String::class.java)
-        val gson = GsonBuilder().serializeNulls().create()
-        val obj = gson.fromJson(response.body, FAILResponse::class.java)
-        Assert.assertEquals("@ARCEE-002 Impossible find Access Rule with code 2", obj.data)
-        val g = GraphFactory.open().traversal()
-        val unitOrganization = g.V().hasLabel("accessRule").has("code", "1").next()
-        Assert.assertFalse(unitOrganization.edges(Direction.OUT, "provide").hasNext())
-    }
-
-    @Test
-    fun cantCreateEdgeWithIncorrectTarget() {
-        val source = VertexInfo("accessRule", "1")
-        val target = VertexInfo("user", "1")
-        val params: Map<String, VertexInfo> = hashMapOf("source" to source, "target" to target)
-        val response =  restTemplate.postForEntity("${this.createEdgeBaseUrl(this.port)}/add", params, String::class.java)
-        val gson = GsonBuilder().serializeNulls().create()
-        val obj = gson.fromJson(response.body, FAILResponse::class.java)
-        Assert.assertEquals("@ARCEE-001 Impossible create this edge with target code ${target.code}", obj.data)
-        val g = GraphFactory.open().traversal()
-        val v1 = g.V().hasLabel("accessRule").has("code", "1")
-        val v2 = g.V().hasLabel("user").has("code", "1")
-        Assert.assertFalse(v1.both().has("id", v2.id()).hasNext())
-    }
-
-    @Test
-    fun createOwnEdge() {
+    override fun createEdge() {
         val source = VertexInfo("accessRule", "1")
         val target = VertexInfo("accessGroup", "1")
         val params: Map<String, VertexInfo> = hashMapOf("source" to source, "target" to target)
@@ -238,6 +247,83 @@ class ApiControllerAccessRuleTests: ApiControllerHelper() {
         Assert.assertTrue(edgeOrganization.edges(Direction.OUT, "own").hasNext())
         val edgeUnitOrganization = g.V().hasLabel("accessGroup").has("code", "1").next()
         Assert.assertTrue(edgeUnitOrganization.edges(Direction.IN, "own").hasNext())
+    }
+
+    @Test
+    override fun updateProperty() {
+        val expirationDate = this.addDays(date, 1)
+        val properties : List<Property> = listOf(Property("expirationDate", format.format(expirationDate)))
+        val requestUpdate = HttpEntity(properties)
+        val response = restTemplate.exchange("${this.createVertexBaseUrl(this.port)}/updateProperty/accessRule/1", HttpMethod.PUT, requestUpdate, String::class.java)
+        val gson = GsonBuilder().serializeNulls().create()
+        val obj: CreateAssociationSuccess = gson.fromJson(response.body, CreateAssociationSuccess::class.java)
+        this.assertAccessRuleApiResponseSuccess("1", true, expirationDate, obj)
+        this.assertAccessRuleMapper("1", true, expirationDate)
+    }
+
+    @Test
+    override fun cantUpdateDefaultProperty() {
+        val properties : List<Property> = listOf(Property("code", "2"))
+        val requestUpdate = HttpEntity(properties)
+        val response = restTemplate.exchange(
+                "${this.createVertexBaseUrl(this.port)}/updateProperty/accessRule/1", HttpMethod.PUT,
+                requestUpdate, String::class.java
+        )
+        val gson = GsonBuilder().serializeNulls().create()
+        val obj: FAILResponse = gson.fromJson(response.body, FAILResponse::class.java)
+        Assert.assertEquals("FAIL", obj.status)
+        Assert.assertEquals("@ARUPE-002 Access Rule property can be updated", obj.data)
+    }
+
+    @Test
+    override fun cantUpdatePropertyFromVertexThatNotExist() {
+        val properties : List<Property> = listOf(Property("enable", "false"))
+        val requestUpdate = HttpEntity(properties)
+        val response = restTemplate.exchange(
+                "${this.createVertexBaseUrl(this.port)}/updateProperty/accessRule/2", HttpMethod.PUT,
+                requestUpdate, String::class.java
+        )
+        val gson = GsonBuilder().serializeNulls().create()
+        val obj: FAILResponse = gson.fromJson(response.body, FAILResponse::class.java)
+        Assert.assertEquals("FAIL", obj.status)
+        Assert.assertEquals("@ARUPE-001 Impossible find Access Rule with code 2", obj.data)
+    }
+
+    @Test
+    override fun deleteVertex() {
+        val requestUpdate = HttpEntity("accessRule")
+        val response = restTemplate.exchange("${this.createVertexBaseUrl(this.port)}/delete/1", HttpMethod.DELETE, requestUpdate, String::class.java)
+        val gson = GsonBuilder().serializeNulls().create()
+        val obj: SUCCESSResponse = gson.fromJson(response.body, SUCCESSResponse::class.java)
+        Assert.assertEquals("SUCCESS", obj.status)
+        Assert.assertEquals(null, obj.data)
+        val g = GraphFactory.open().traversal()
+        this.assertAccessRuleMapper("1", false, date)
+    }
+
+    @Test
+    override fun cantDeleteVertexThatNotExist() {
+        val requestUpdate = HttpEntity("accessRule")
+        val response = restTemplate.exchange("${this.createVertexBaseUrl(this.port)}/delete/2", HttpMethod.DELETE, requestUpdate, String::class.java)
+        val gson = GsonBuilder().serializeNulls().create()
+        val obj: FAILResponse = gson.fromJson(response.body, FAILResponse::class.java)
+        Assert.assertEquals("FAIL", obj.status)
+        Assert.assertEquals("@ARDE-001 Impossible find Access Rule with code 2", obj.data)
+    }
+
+    @Test
+    override fun cantCreateEdgeWithIncorrectTarget() {
+        val source = VertexInfo("accessRule", "1")
+        val target = VertexInfo("user", "1")
+        val params: Map<String, VertexInfo> = hashMapOf("source" to source, "target" to target)
+        val response =  restTemplate.postForEntity("${this.createEdgeBaseUrl(this.port)}/add", params, String::class.java)
+        val gson = GsonBuilder().serializeNulls().create()
+        val obj = gson.fromJson(response.body, FAILResponse::class.java)
+        Assert.assertEquals("@ARCEE-001 Impossible create this edge with target code ${target.code}", obj.data)
+        val g = GraphFactory.open().traversal()
+        val v1 = g.V().hasLabel("accessRule").has("code", "1")
+        val v2 = g.V().hasLabel("user").has("code", "1")
+        Assert.assertFalse(v1.both().has("id", v2.id()).hasNext())
     }
 
     @Test
@@ -266,53 +352,5 @@ class ApiControllerAccessRuleTests: ApiControllerHelper() {
             val eTarget = g.V().hasLabel(target.label).has("code", target.code).next()
             Assert.assertTrue(eTarget.edges(Direction.IN, "provide").hasNext())
         }
-    }
-
-    @Test
-    fun updateOrganizationProperty() {
-        val expirationDate = this.addDays(date, 1)
-        val properties : List<Property> = listOf(Property("expirationDate", format.format(expirationDate)))
-        val requestUpdate = HttpEntity(properties)
-        val response = restTemplate.exchange("${this.createVertexBaseUrl(this.port)}/updateProperty/accessRule/1", HttpMethod.PUT, requestUpdate, String::class.java)
-        val gson = GsonBuilder().serializeNulls().create()
-        val obj: CreateAssociationSuccess = gson.fromJson(response.body, CreateAssociationSuccess::class.java)
-        this.assertAccessRuleApiResponseSuccess("1", true, expirationDate, obj)
-        this.assertAccessRuleMapper("1", true, expirationDate)
-    }
-
-    @Test
-    fun cantUpdateAccessRuleDefaultProperty() {
-        val properties : List<Property> = listOf(Property("code", "2"))
-        val requestUpdate = HttpEntity(properties)
-        val response = restTemplate.exchange(
-                "${this.createVertexBaseUrl(this.port)}/updateProperty/accessRule/1", HttpMethod.PUT,
-                requestUpdate, String::class.java
-        )
-        val gson = GsonBuilder().serializeNulls().create()
-        val obj: FAILResponse = gson.fromJson(response.body, FAILResponse::class.java)
-        Assert.assertEquals("FAIL", obj.status)
-        Assert.assertEquals("@ARUPE-002 Access Rule property can be updated", obj.data)
-    }
-
-    @Test
-    fun deleteAccessRule() {
-        val requestUpdate = HttpEntity("accessRule")
-        val response = restTemplate.exchange("${this.createVertexBaseUrl(this.port)}/delete/1", HttpMethod.DELETE, requestUpdate, String::class.java)
-        val gson = GsonBuilder().serializeNulls().create()
-        val obj: SUCCESSResponse = gson.fromJson(response.body, SUCCESSResponse::class.java)
-        Assert.assertEquals("SUCCESS", obj.status)
-        Assert.assertEquals(null, obj.data)
-        val g = GraphFactory.open().traversal()
-        this.assertAccessRuleMapper("1", false, date)
-    }
-
-    @Test
-    fun cantDeleteOrganizationThatNotExist() {
-        val requestUpdate = HttpEntity("accessRule")
-        val response = restTemplate.exchange("${this.createVertexBaseUrl(this.port)}/delete/2", HttpMethod.DELETE, requestUpdate, String::class.java)
-        val gson = GsonBuilder().serializeNulls().create()
-        val obj: FAILResponse = gson.fromJson(response.body, FAILResponse::class.java)
-        Assert.assertEquals("FAIL", obj.status)
-        Assert.assertEquals("@ARDE-001 Impossible find Access Rule with code 2", obj.data)
     }
 }

@@ -231,4 +231,16 @@ abstract class ApiControllerHelper {
         Assert.assertEquals(description, AbstractMapper.parseMapValue(values["description"].toString()))
         Assert.assertEquals(enable, AbstractMapper.parseMapValue(values["enable"].toString()).toBoolean())
     }
+
+
+    fun assertRuleApiResponseSuccess(code: String, name: String, description: String, enable: Boolean, creationDate: Date, response: CreatePermissionSuccess) {
+        val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
+        val objExpirationDate = format.parse(response.data.creationDate)
+        Assert.assertEquals("SUCCESS", response.status)
+        Assert.assertEquals(format.format(creationDate), format.format(objExpirationDate))
+        Assert.assertEquals(code, response.data.code)
+        Assert.assertEquals(name, response.data.name)
+        Assert.assertEquals(description, response.data.description)
+        Assert.assertEquals(enable, response.data.enable)
+    }
 }
