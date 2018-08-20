@@ -5,6 +5,7 @@ import br.com.ntopus.accesscontrol.model.GraphFactory
 import br.com.ntopus.accesscontrol.model.data.Property
 import br.com.ntopus.accesscontrol.model.data.VertexData
 import br.com.ntopus.accesscontrol.model.vertex.base.FAILResponse
+import br.com.ntopus.accesscontrol.model.vertex.base.SUCCESSResponse
 import br.com.ntopus.accesscontrol.model.vertex.mapper.AbstractMapper
 import br.com.ntopus.accesscontrol.model.vertex.mapper.VertexInfo
 import br.com.ntopus.accesscontrol.schema.importer.JanusGraphSchemaImporter
@@ -37,13 +38,32 @@ class ApiControllerRuleTests: ApiControllerHelper(), IVertexTests {
 
     private val date: Date = Date()
 
+    private val graph = GraphFactory.setInstance("janusgraph-inmemory.properties")
+
+    private var ruleId: Long = 0
+
     @Before
     fun setup() {
-        GraphFactory.setInstance("janusgraph-inmemory.properties")
-        val graph = GraphFactory.open()
-        JanusGraphSchemaImporter().writeGraphSONSchema(graph, ClassPathResource("schema.json").file.absolutePath)
-        this.createDefaultRules(date)
+        JanusGraphSchemaImporter().writeGraphSONSchema(graph.open(), ClassPathResource("schema.json").file.absolutePath)
+        this.ruleId = this.createDefaultRules(date)!!
     }
+
+    @Test
+    override fun getVertex() {
+        val gson = Gson()
+        val response =  restTemplate.getForEntity("${this.createVertexBaseUrl(this.port)}/?id=${this.ruleId}",  String::class.java)
+        val obj = gson.fromJson(response.body, VertexSuccess::class.java)
+        val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
+        val creationDate = format.parse(obj.data["creationDate"].toString())
+        Assert.assertEquals(200, response.statusCode.value())
+        Assert.assertEquals(this.ruleId.toString(), obj.data["id"])
+        Assert.assertEquals("ADD_USER", obj.data["name"])
+        Assert.assertEquals("1", obj.data["code"])
+        Assert.assertEquals("This is a Rule Add User", obj.data["description"])
+        Assert.assertEquals(true, obj.data["enable"]!!.toBoolean())
+        Assert.assertEquals(format.format(date), format.format(creationDate))
+    }
+
     @Test
     override fun createVertex() {
         val gson = Gson()
@@ -64,7 +84,7 @@ class ApiControllerRuleTests: ApiControllerHelper(), IVertexTests {
         Assert.assertEquals("This is a Rule Remove User", obj.data.description)
         Assert.assertEquals(true, obj.data.enable)
         val g = GraphFactory.open().traversal()
-        val userStorage = g.V().hasLabel("rule").has("code", "3")
+        val userStorage = g.V().hasLabel("rule").has("code", "3").next()
         val values = AbstractMapper.parseMapVertex(userStorage)
         Assert.assertEquals("REMOVE_USER", AbstractMapper.parseMapValue(values["name"].toString()))
         Assert.assertEquals("3", AbstractMapper.parseMapValue(values["code"].toString()))
@@ -90,7 +110,7 @@ class ApiControllerRuleTests: ApiControllerHelper(), IVertexTests {
         Assert.assertEquals("This is a description", obj.data.description)
         Assert.assertEquals(false, obj.data.enable)
         val g = GraphFactory.open().traversal()
-        val vertex = g.V().hasLabel("rule").has("code", "3")
+        val vertex = g.V().hasLabel("rule").has("code", "3").next()
         val values = AbstractMapper.parseMapVertex(vertex)
         Assert.assertEquals("REMOVE_USER", AbstractMapper.parseMapValue(values["name"].toString()))
         Assert.assertEquals("3", AbstractMapper.parseMapValue(values["code"].toString()))
@@ -100,7 +120,7 @@ class ApiControllerRuleTests: ApiControllerHelper(), IVertexTests {
     }
 
     @Test
-    override fun cantCeateVertexThatExist() {
+    override fun cantCreateVertexThatExist() {
         val gson = Gson()
         val properties: List<Property> = listOf(
                 Property("code", "1"),
@@ -110,7 +130,7 @@ class ApiControllerRuleTests: ApiControllerHelper(), IVertexTests {
         val response =  restTemplate.postForEntity("${this.createVertexBaseUrl(this.port)}/add", rule, String::class.java)
         val obj = gson.fromJson(response.body, FAILResponse::class.java)
         Assert.assertEquals(404, response.statusCode.value())
-        Assert.assertEquals("FAIL", obj.data)
+        Assert.assertEquals("FAIL", obj.status)
         Assert.assertEquals("@RCVE-002 Adding this property for key [code] and value [1] violates a uniqueness constraint [vByRuleCode]", obj.data)
     }
 
@@ -124,8 +144,8 @@ class ApiControllerRuleTests: ApiControllerHelper(), IVertexTests {
         val response =  restTemplate.postForEntity("${this.createVertexBaseUrl(this.port)}/add", rule, String::class.java)
         val obj = gson.fromJson(response.body, FAILResponse::class.java)
         Assert.assertEquals(404, response.statusCode.value())
-        Assert.assertEquals("FAIL", obj.data)
-        Assert.assertEquals("@GCVE-001 Empty Group properties", obj.data)
+        Assert.assertEquals("FAIL", obj.status)
+        Assert.assertEquals("@RCVE-001 Empty Rule properties", obj.data)
     }
 
     override fun cantCreateEdgeWithSourceThatNotExist() {
@@ -161,27 +181,55 @@ class ApiControllerRuleTests: ApiControllerHelper(), IVertexTests {
         val gson = GsonBuilder().serializeNulls().create()
         val obj = gson.fromJson(response.body, CreatePermissionSuccess::class.java)
         Assert.assertEquals(200, response.statusCode.value())
+        println("-------->ID ${this.ruleId}")
         this.assertRuleApiResponseSuccess("1", "Test", "Property updated", true, date, obj)
         this.assertRuleMapper("1", "Test", "Property updated", date, true)
     }
 
     @Test
     override fun cantUpdateDefaultProperty() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        val properties : List<Property> = listOf(Property("name", "Test"), Property("code", "2"))
+        val requestUpdate = HttpEntity(properties)
+        val response = restTemplate.exchange("${this.createVertexBaseUrl(this.port)}/updateProperty/rule/1", HttpMethod.PUT, requestUpdate, String::class.java)
+        val gson = GsonBuilder().serializeNulls().create()
+        val obj: FAILResponse = gson.fromJson(response.body, FAILResponse::class.java)
+        Assert.assertEquals(404, response.statusCode.value())
+        Assert.assertEquals("FAIL", obj.status)
+        Assert.assertEquals("@RUPE-002 Rule property can be updated", obj.data)
     }
 
     @Test
     override fun cantUpdatePropertyFromVertexThatNotExist() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        val properties : List<Property> = listOf(Property("name", "Test"))
+        val requestUpdate = HttpEntity(properties)
+        val response = restTemplate.exchange("${this.createVertexBaseUrl(this.port)}/updateProperty/rule/3", HttpMethod.PUT, requestUpdate, String::class.java)
+        val gson = GsonBuilder().serializeNulls().create()
+        val obj: FAILResponse = gson.fromJson(response.body, FAILResponse::class.java)
+        Assert.assertEquals(404, response.statusCode.value())
+        Assert.assertEquals("FAIL", obj.status)
+        Assert.assertEquals("RUPE-001 Impossible find Rule with code 3", obj.data)
     }
 
     @Test
     override fun deleteVertex() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        val requestUpdate = HttpEntity("rule")
+        val response = restTemplate.exchange("${this.createVertexBaseUrl(this.port)}/delete/1", HttpMethod.DELETE, requestUpdate, String::class.java)
+        val gson = GsonBuilder().serializeNulls().create()
+        val obj: SUCCESSResponse = gson.fromJson(response.body, SUCCESSResponse::class.java)
+        Assert.assertEquals(200, response.statusCode.value())
+        Assert.assertEquals("SUCCESS", obj.status)
+        Assert.assertEquals(null, obj.data)
+        this.assertRuleMapper("1", "ADD_USER", "This is a Rule Add User", date, false)
     }
 
     @Test
     override fun cantDeleteVertexThatNotExist() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        val requestUpdate = HttpEntity("rule")
+        val response = restTemplate.exchange("${this.createVertexBaseUrl(this.port)}/delete/3", HttpMethod.DELETE, requestUpdate, String::class.java)
+        val gson = GsonBuilder().serializeNulls().create()
+        val obj: FAILResponse = gson.fromJson(response.body, FAILResponse::class.java)
+        Assert.assertEquals(404, response.statusCode.value())
+        Assert.assertEquals("FAIL", obj.status)
+        Assert.assertEquals("@RDE-001 Impossible find Rule with code 3", obj.data)
     }
 }

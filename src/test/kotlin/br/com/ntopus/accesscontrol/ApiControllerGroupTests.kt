@@ -1,9 +1,6 @@
 package br.com.ntopus.accesscontrol
 
-import br.com.ntopus.accesscontrol.helper.ApiControllerHelper
-import br.com.ntopus.accesscontrol.helper.CreateAgentSuccess
-import br.com.ntopus.accesscontrol.helper.CreateEdgeSuccess
-import br.com.ntopus.accesscontrol.helper.IVertexTests
+import br.com.ntopus.accesscontrol.helper.*
 import br.com.ntopus.accesscontrol.model.GraphFactory
 import br.com.ntopus.accesscontrol.model.data.Property
 import br.com.ntopus.accesscontrol.model.data.PropertyLabel
@@ -35,6 +32,7 @@ import java.util.*
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class ApiControllerGroupTests: ApiControllerHelper(), IVertexTests {
+
     @Autowired
     lateinit var restTemplate: TestRestTemplate
 
@@ -42,14 +40,33 @@ class ApiControllerGroupTests: ApiControllerHelper(), IVertexTests {
     private val port: Int = 0
 
     private val date: Date = Date()
+
     private val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
+
+    private var graph = GraphFactory.setInstance("janusgraph-inmemory.properties")
+
+    private var groupId: Long = 0
 
     @Before
     fun setup() {
-        GraphFactory.setInstance("janusgraph-inmemory.properties")
-        val graph = GraphFactory.open()
-        JanusGraphSchemaImporter().writeGraphSONSchema(graph, ClassPathResource("schema.json").file.absolutePath)
-        this.createDefaultGroup(date)
+        JanusGraphSchemaImporter().writeGraphSONSchema(graph.open(), ClassPathResource("schema.json").file.absolutePath)
+        this.groupId = this.createDefaultGroup(date)!!
+    }
+
+    @Test
+    override fun getVertex() {
+        val gson = Gson()
+        val response =  restTemplate.getForEntity("${this.createVertexBaseUrl(this.port)}/?id=${this.groupId}",  String::class.java)
+        val obj = gson.fromJson(response.body, VertexSuccess::class.java)
+        val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
+        val creationDate = format.parse(obj.data["creationDate"].toString())
+        Assert.assertEquals(200, response.statusCode.value())
+        Assert.assertEquals(this.groupId.toString(), obj.data["id"])
+        Assert.assertEquals("Marketing", obj.data["name"])
+        Assert.assertEquals("1", obj.data["code"])
+        Assert.assertEquals("This is a Marketing Group", obj.data["observation"])
+        Assert.assertEquals(true, obj.data["enable"]!!.toBoolean())
+        Assert.assertEquals(format.format(date), format.format(creationDate))
     }
 
     @Test
@@ -71,7 +88,7 @@ class ApiControllerGroupTests: ApiControllerHelper(), IVertexTests {
         Assert.assertEquals("This is a RH Group", obj.data.observation)
         Assert.assertEquals(true, obj.data.enable)
         val g = GraphFactory.open().traversal()
-        val userStorage = g.V().hasLabel(VertexLabel.GROUP.label).has(PropertyLabel.CODE.label, "2")
+        val userStorage = g.V().hasLabel(VertexLabel.GROUP.label).has(PropertyLabel.CODE.label, "2").next()
         val values = AbstractMapper.parseMapVertex(userStorage)
         Assert.assertNotNull(AbstractMapper.parseMapValue(values["creationDate"].toString()))
         Assert.assertEquals("RH", AbstractMapper.parseMapValue(values["name"].toString()))
@@ -100,7 +117,7 @@ class ApiControllerGroupTests: ApiControllerHelper(), IVertexTests {
         Assert.assertEquals("This is a observation", obj.data.observation)
         Assert.assertEquals(true, obj.data.enable)
         val g = GraphFactory.open().traversal()
-        val userStorage = g.V().hasLabel(VertexLabel.GROUP.label).has(PropertyLabel.CODE.label, "2")
+        val userStorage = g.V().hasLabel(VertexLabel.GROUP.label).has(PropertyLabel.CODE.label, "2").next()
         val values = AbstractMapper.parseMapVertex(userStorage)
         Assert.assertEquals("New Group", AbstractMapper.parseMapValue(values["name"].toString()))
         Assert.assertEquals("2", AbstractMapper.parseMapValue(values["code"].toString()))
@@ -110,7 +127,7 @@ class ApiControllerGroupTests: ApiControllerHelper(), IVertexTests {
     }
 
     @Test
-    override fun cantCeateVertexThatExist() {
+    override fun cantCreateVertexThatExist() {
         val gson = Gson()
         val properties: List<Property> = listOf(Property("code", "1"), Property("name", "Test"))
         val group = VertexData("group", properties)
@@ -120,7 +137,7 @@ class ApiControllerGroupTests: ApiControllerHelper(), IVertexTests {
         Assert.assertEquals(404, response.statusCode.value())
         Assert.assertEquals("FAIL", obj.status)
         val g = GraphFactory.open().traversal()
-        val groupStorage = g.V().hasLabel(VertexLabel.GROUP.label).has(PropertyLabel.CODE.label, "1")
+        val groupStorage = g.V().hasLabel(VertexLabel.GROUP.label).has(PropertyLabel.CODE.label, "1").next()
         val values = AbstractMapper.parseMapVertex(groupStorage)
         Assert.assertEquals(format.format(date), AbstractMapper.parseMapValueDate(values["creationDate"].toString()))
         Assert.assertEquals("Marketing", AbstractMapper.parseMapValue(values["name"].toString()))
@@ -140,17 +157,13 @@ class ApiControllerGroupTests: ApiControllerHelper(), IVertexTests {
         Assert.assertEquals(404, response.statusCode.value())
         Assert.assertEquals("FAIL", obj.status)
         val g = GraphFactory.open().traversal()
-        val groupStorage = g.V().hasLabel(VertexLabel.GROUP.label).has(PropertyLabel.CODE.label, "2")
-        val values = AbstractMapper.parseMapVertex(groupStorage)
-        Assert.assertEquals(0, values.size)
+        Assert.assertFalse(g.V().hasLabel(VertexLabel.GROUP.label).has(PropertyLabel.CODE.label, "2").hasNext())
         val name: List<Property> = listOf(Property("name", "test"))
         val group1 = VertexData("group", name)
         val response1 =  restTemplate.postForEntity("${this.createVertexBaseUrl(this.port)}/add", group1, String::class.java)
         val obj1 = gson.fromJson(response1.body, FAILResponse::class.java)
         Assert.assertEquals("@GCVE-001 Empty Group properties", obj1.data)
-        val groupStorage1 = g.V().hasLabel(VertexLabel.GROUP.label).has(PropertyLabel.CODE.label, "2")
-        val values1 = AbstractMapper.parseMapVertex(groupStorage1)
-        Assert.assertEquals(0, values1.size)
+        Assert.assertFalse(g.V().hasLabel(VertexLabel.GROUP.label).has(PropertyLabel.CODE.label, "2").hasNext())
     }
 
     @Test
@@ -165,9 +178,7 @@ class ApiControllerGroupTests: ApiControllerHelper(), IVertexTests {
         Assert.assertEquals("FAIL", obj.status)
         Assert.assertEquals("@GCEE-002 Impossible find Group with code ${source.code}", obj.data)
         val g = GraphFactory.open().traversal()
-        val group = g.V().hasLabel(VertexLabel.GROUP.label).has(PropertyLabel.CODE.label, "2")
-        val values = AbstractMapper.parseMapVertex(group)
-        Assert.assertEquals(0, values.size)
+        Assert.assertFalse(g.V().hasLabel(VertexLabel.GROUP.label).has(PropertyLabel.CODE.label, "2").hasNext())
     }
 
     @Test
@@ -182,9 +193,7 @@ class ApiControllerGroupTests: ApiControllerHelper(), IVertexTests {
         Assert.assertEquals("FAIL", obj.status)
         Assert.assertEquals("@GCEE-003 Impossible find Group with code ${target.code}", obj.data)
         val g = GraphFactory.open().traversal()
-        val group = g.V().hasLabel(VertexLabel.GROUP.label).has(PropertyLabel.CODE.label, "2")
-        val values = AbstractMapper.parseMapVertex(group)
-        Assert.assertEquals(0, values.size)
+        Assert.assertFalse(g.V().hasLabel(VertexLabel.GROUP.label).has(PropertyLabel.CODE.label, "2").hasNext())
     }
 
     @Test
@@ -236,7 +245,7 @@ class ApiControllerGroupTests: ApiControllerHelper(), IVertexTests {
         Assert.assertEquals("Property updated", obj.data.observation)
         Assert.assertEquals(true, obj.data.enable)
         val g = GraphFactory.open().traversal()
-        val organizationStorage = g.V().hasLabel(VertexLabel.GROUP.label).has(PropertyLabel.CODE.label, "1")
+        val organizationStorage = g.V().hasLabel(VertexLabel.GROUP.label).has(PropertyLabel.CODE.label, "1").next()
         val values = AbstractMapper.parseMapVertex(organizationStorage)
         Assert.assertNotNull(AbstractMapper.parseMapValue(values["creationDate"].toString()))
         Assert.assertEquals("Group Test", AbstractMapper.parseMapValue(values["name"].toString()))
@@ -285,7 +294,7 @@ class ApiControllerGroupTests: ApiControllerHelper(), IVertexTests {
         Assert.assertEquals("SUCCESS", obj.status)
         Assert.assertEquals(null, obj.data)
         val g = GraphFactory.open().traversal()
-        val organizationStorage = g.V().hasLabel(VertexLabel.GROUP.label).has(PropertyLabel.CODE.label, "1")
+        val organizationStorage = g.V().hasLabel(VertexLabel.GROUP.label).has(PropertyLabel.CODE.label, "1").next()
         val values = AbstractMapper.parseMapVertex(organizationStorage)
         Assert.assertEquals(format.format(date), AbstractMapper.parseMapValueDate(values["creationDate"].toString()))
         Assert.assertEquals("Marketing", AbstractMapper.parseMapValue(values["name"].toString()))

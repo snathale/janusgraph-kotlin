@@ -28,11 +28,13 @@ class RuleMapper (val properties: Map<String, String>): IMapper {
                 rule.property(PropertyLabel.DESCRIPTION.label, this.rule.description)
             }
             graph.tx().commit()
+            this.rule.id = rule.longId()
         } catch (e: Exception) {
             graph.tx().rollback()
             return FAILResponse(data = "@RCVE-002 ${e.message.toString()}")
         }
         val response = PermissionResponse(
+                this.rule.id!!,
                 this.rule.code, this.rule.name, this.rule.formatDate(), this.rule.description, this.rule.enable
         )
         return SUCCESSResponse(data = response)
@@ -47,7 +49,7 @@ class RuleMapper (val properties: Map<String, String>): IMapper {
                 ?: return FAILResponse(data = "RUPE-001 Impossible find Rule with code ${this.rule.code}")
 
         if (!RuleValidator().canUpdateVertexProperty(properties)) {
-            return FAILResponse(data = "@RUPE-002 Rule not have this properties $properties")
+            return FAILResponse(data = "@RUPE-002 Rule property can be updated")
         }
         try {
             for (property in properties) {
@@ -59,9 +61,10 @@ class RuleMapper (val properties: Map<String, String>): IMapper {
             return FAILResponse(data = "@RUPE-003 ${e.message.toString()}")
         }
         val traversal = graph.traversal().V().hasLabel(VertexLabel.RULE.label)
-                .has(PropertyLabel.CODE.label, this.rule.code)
+                .has(PropertyLabel.CODE.label, this.rule.code).next()
         val values = AbstractMapper.parseMapVertex(traversal)
         val response = PermissionResponse(
+                rule.id() as Long,
                 this.rule.code,
                 AbstractMapper.parseMapValue(values[PropertyLabel.NAME.label].toString()),
                 AbstractMapper.parseMapValueDate(values[PropertyLabel.CREATION_DATE.label].toString())!!,

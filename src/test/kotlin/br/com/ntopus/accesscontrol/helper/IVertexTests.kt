@@ -1,9 +1,10 @@
 package br.com.ntopus.accesscontrol.helper
 
 interface IVertexTests {
+    fun getVertex()
     fun createVertex()
     fun createVertexWithExtraProperty()
-    fun cantCeateVertexThatExist()
+    fun cantCreateVertexThatExist()
     fun cantCreateVertexWithRequiredPropertyEmpty()
     fun cantCreateEdgeWithSourceThatNotExist()
     fun cantCreateEdgeWithTargetThatNotExist()

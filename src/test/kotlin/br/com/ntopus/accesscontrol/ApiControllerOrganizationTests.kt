@@ -1,9 +1,6 @@
 package br.com.ntopus.accesscontrol
 
-import br.com.ntopus.accesscontrol.helper.ApiControllerHelper
-import br.com.ntopus.accesscontrol.helper.CreateEdgeSuccess
-import br.com.ntopus.accesscontrol.helper.CreateAgentSuccess
-import br.com.ntopus.accesscontrol.helper.IVertexTests
+import br.com.ntopus.accesscontrol.helper.*
 import br.com.ntopus.accesscontrol.model.GraphFactory
 import br.com.ntopus.accesscontrol.model.data.Property
 import br.com.ntopus.accesscontrol.model.data.PropertyLabel
@@ -35,6 +32,7 @@ import java.util.*
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class ApiControllerOrganizationTests: ApiControllerHelper(), IVertexTests {
+
     @Autowired
     lateinit var restTemplate: TestRestTemplate
 
@@ -42,15 +40,34 @@ class ApiControllerOrganizationTests: ApiControllerHelper(), IVertexTests {
     private val port: Int = 0
 
     private val date: Date = Date()
+
     private val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
+
+    private val graph = GraphFactory.setInstance("janusgraph-inmemory.properties")
+
+    private val organizationId: Long = 0
 
     @Before
     fun setup() {
-        GraphFactory.setInstance("janusgraph-inmemory.properties")
-        val graph = GraphFactory.open()
-        JanusGraphSchemaImporter().writeGraphSONSchema(graph, ClassPathResource("schema.json").file.absolutePath)
+        JanusGraphSchemaImporter().writeGraphSONSchema(graph.open(), ClassPathResource("schema.json").file.absolutePath)
         this.createDefaultOrganization(date)
         this.createDefaultUnitOrganization(Date())
+    }
+
+    @Test
+    override fun getVertex() {
+        val gson = Gson()
+        val response =  restTemplate.getForEntity("${this.createVertexBaseUrl(this.port)}/?id=${this.organizationId}",  String::class.java)
+        val obj = gson.fromJson(response.body, VertexSuccess::class.java)
+        val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
+        val creationDate = format.parse(obj.data["creationDate"].toString())
+        Assert.assertEquals(200, response.statusCode.value())
+        Assert.assertEquals(this.organizationId.toString(), obj.data["id"])
+        Assert.assertEquals("Kofre", obj.data["name"])
+        Assert.assertEquals("1", obj.data["code"])
+        Assert.assertEquals("This is a Organization", obj.data["observation"])
+        Assert.assertEquals(true, obj.data["enable"]!!.toBoolean())
+        Assert.assertEquals(format.format(date), format.format(creationDate))
     }
 
     @Test
@@ -72,7 +89,7 @@ class ApiControllerOrganizationTests: ApiControllerHelper(), IVertexTests {
         Assert.assertEquals("This is a observation", obj.data.observation)
         Assert.assertEquals(true, obj.data.enable)
         val g = GraphFactory.open().traversal()
-        val userStorage = g.V().hasLabel(VertexLabel.ORGANIZATION.label).has(PropertyLabel.CODE.label, "2")
+        val userStorage = g.V().hasLabel(VertexLabel.ORGANIZATION.label).has(PropertyLabel.CODE.label, "2").next()
         val values = AbstractMapper.parseMapVertex(userStorage)
         Assert.assertEquals("New Organization", AbstractMapper.parseMapValue(values["name"].toString()))
         Assert.assertEquals("2", AbstractMapper.parseMapValue(values["code"].toString()))
@@ -100,7 +117,7 @@ class ApiControllerOrganizationTests: ApiControllerHelper(), IVertexTests {
         Assert.assertEquals("This is a observation", obj.data.observation)
         Assert.assertEquals(true, obj.data.enable)
         val g = GraphFactory.open().traversal()
-        val userStorage = g.V().hasLabel(VertexLabel.ORGANIZATION.label).has(PropertyLabel.CODE.label, "2")
+        val userStorage = g.V().hasLabel(VertexLabel.ORGANIZATION.label).has(PropertyLabel.CODE.label, "2").next()
         val values = AbstractMapper.parseMapVertex(userStorage)
         Assert.assertEquals("New Organization", AbstractMapper.parseMapValue(values["name"].toString()))
         Assert.assertEquals("2", AbstractMapper.parseMapValue(values["code"].toString()))
@@ -110,7 +127,7 @@ class ApiControllerOrganizationTests: ApiControllerHelper(), IVertexTests {
     }
 
     @Test
-    override fun cantCeateVertexThatExist() {
+    override fun cantCreateVertexThatExist() {
         val gson = Gson()
         val properties: List<Property> = listOf(Property("code", "1"), Property("name", "Test"))
         val organization = VertexData("organization", properties)
@@ -120,7 +137,7 @@ class ApiControllerOrganizationTests: ApiControllerHelper(), IVertexTests {
         Assert.assertEquals("FAIL", obj.status)
         Assert.assertEquals("@OCVE-002 Adding this property for key [code] and value [1] violates a uniqueness constraint [vByOrganizationCode]", obj.data)
         val g = GraphFactory.open().traversal()
-        val organizationStorage = g.V().hasLabel(VertexLabel.ORGANIZATION.label).has(PropertyLabel.CODE.label, "1")
+        val organizationStorage = g.V().hasLabel(VertexLabel.ORGANIZATION.label).has(PropertyLabel.CODE.label, "1").next()
         val values = AbstractMapper.parseMapVertex(organizationStorage)
         Assert.assertEquals("Kofre", AbstractMapper.parseMapValue(values["name"].toString()))
         Assert.assertEquals("1", AbstractMapper.parseMapValue(values["code"].toString()))
@@ -140,7 +157,7 @@ class ApiControllerOrganizationTests: ApiControllerHelper(), IVertexTests {
         Assert.assertEquals("FAIL", obj.status)
         Assert.assertEquals("@OCVE-001 Empty Organization properties", obj.data)
         val g = GraphFactory.open().traversal()
-        val organizationStorage = g.V().hasLabel(VertexLabel.ORGANIZATION.label).has(PropertyLabel.CODE.label, "2")
+        val organizationStorage = g.V().hasLabel(VertexLabel.ORGANIZATION.label).has(PropertyLabel.CODE.label, "2").next()
         val values = AbstractMapper.parseMapVertex(organizationStorage)
         Assert.assertEquals(0, values.size)
         val name: List<Property> = listOf(Property("name", "test"))
@@ -150,7 +167,7 @@ class ApiControllerOrganizationTests: ApiControllerHelper(), IVertexTests {
         Assert.assertEquals(404, response.statusCode.value())
         Assert.assertEquals("FAIL", obj.status)
         Assert.assertEquals("@OCVE-001 Empty Organization properties", obj1.data)
-        val organizationStorage1 = g.V().hasLabel(VertexLabel.ORGANIZATION.label).has(PropertyLabel.CODE.label, "2")
+        val organizationStorage1 = g.V().hasLabel(VertexLabel.ORGANIZATION.label).has(PropertyLabel.CODE.label, "2").next()
         val values1 = AbstractMapper.parseMapVertex(organizationStorage1)
         Assert.assertEquals(0, values1.size)
     }
@@ -203,10 +220,10 @@ class ApiControllerOrganizationTests: ApiControllerHelper(), IVertexTests {
         Assert.assertEquals("1", edgeObj.data.target.code)
         Assert.assertEquals("has", edgeObj.data.edgeLabel)
         val g = GraphFactory.open().traversal()
-        val organization = g.V().hasLabel(VertexLabel.ORGANIZATION.label).has(PropertyLabel.CODE.label, "1")
+        val organization = g.V().hasLabel(VertexLabel.ORGANIZATION.label).has(PropertyLabel.CODE.label, "1").next()
         val organizationValues = AbstractMapper.parseMapVertex(organization)
         Assert.assertTrue(organizationValues.size > 0)
-        val unitOrganization = g.V().hasLabel(VertexLabel.UNIT_ORGANIZATION.label).has(PropertyLabel.CODE.label, "1")
+        val unitOrganization = g.V().hasLabel(VertexLabel.UNIT_ORGANIZATION.label).has(PropertyLabel.CODE.label, "1").next()
         val unitOrganizationValues = AbstractMapper.parseMapVertex(unitOrganization)
         Assert.assertTrue(unitOrganizationValues.size > 0)
         val edgeOrganization = g.V().hasLabel(VertexLabel.ORGANIZATION.label).has(PropertyLabel.CODE.label, "1").next()
@@ -229,7 +246,7 @@ class ApiControllerOrganizationTests: ApiControllerHelper(), IVertexTests {
         Assert.assertEquals("Property updated", obj.data.observation)
         Assert.assertEquals(true, obj.data.enable)
         val g = GraphFactory.open().traversal()
-        val organizationStorage = g.V().hasLabel(VertexLabel.ORGANIZATION.label).has(PropertyLabel.CODE.label, "1")
+        val organizationStorage = g.V().hasLabel(VertexLabel.ORGANIZATION.label).has(PropertyLabel.CODE.label, "1").next()
         val values = AbstractMapper.parseMapVertex(organizationStorage)
         Assert.assertEquals("Organization Test", AbstractMapper.parseMapValue(values["name"].toString()))
         Assert.assertEquals("1", AbstractMapper.parseMapValue(values["code"].toString()))
@@ -278,7 +295,7 @@ class ApiControllerOrganizationTests: ApiControllerHelper(), IVertexTests {
         Assert.assertEquals("SUCCESS", obj.status)
         Assert.assertEquals(null, obj.data)
         val g = GraphFactory.open().traversal()
-        val organizationStorage = g.V().hasLabel(VertexLabel.ORGANIZATION.label).has(PropertyLabel.CODE.label, "1")
+        val organizationStorage = g.V().hasLabel(VertexLabel.ORGANIZATION.label).has(PropertyLabel.CODE.label, "1").next()
         val values = AbstractMapper.parseMapVertex(organizationStorage)
         Assert.assertEquals("Kofre", AbstractMapper.parseMapValue(values["name"].toString()))
         Assert.assertEquals("1", AbstractMapper.parseMapValue(values["code"].toString()))

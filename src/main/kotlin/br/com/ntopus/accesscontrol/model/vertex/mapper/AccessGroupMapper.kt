@@ -30,11 +30,13 @@ class AccessGroupMapper(val properties: Map<String, String>) : IMapper {
                 accessGroup.property(PropertyLabel.DESCRIPTION.label, this.accessGroup.description)
             }
             graph.tx().commit()
+            this.accessGroup.id = accessGroup.longId()
         } catch (e: Exception) {
             graph.tx().rollback()
             return FAILResponse(data = "@AGCVE-002 ${e.message.toString()}")
         }
         val response = PermissionResponse(
+                this.accessGroup.id!!,
                 this.accessGroup.code,
                 this.accessGroup.name,
                 this.accessGroup.formatDate(),
@@ -80,9 +82,10 @@ class AccessGroupMapper(val properties: Map<String, String>) : IMapper {
             return FAILResponse(data = "@AGUPE-003 ${e.message.toString()}")
         }
         val traversal = graph.traversal().V().hasLabel(VertexLabel.ACCESS_GROUP.label)
-                .has(PropertyLabel.CODE.label, this.accessGroup.code)
+                .has(PropertyLabel.CODE.label, this.accessGroup.code).next()
         val values = AbstractMapper.parseMapVertex(traversal)
         val response = PermissionResponse(
+                accessGroup.id() as Long,
                 this.accessGroup.code,
                 AbstractMapper.parseMapValue(values[PropertyLabel.NAME.label].toString()),
                 AbstractMapper.parseMapValueDate(values[PropertyLabel.CREATION_DATE.label].toString())!!,

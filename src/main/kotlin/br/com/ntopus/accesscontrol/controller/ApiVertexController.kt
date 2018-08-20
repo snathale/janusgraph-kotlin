@@ -6,7 +6,11 @@ import br.com.ntopus.accesscontrol.model.StatusResponse
 import br.com.ntopus.accesscontrol.model.data.Property
 import br.com.ntopus.accesscontrol.model.data.PropertyLabel
 import br.com.ntopus.accesscontrol.model.data.VertexData
+import br.com.ntopus.accesscontrol.model.data.VertexLabel
 import br.com.ntopus.accesscontrol.model.vertex.base.ERRORResponse
+import br.com.ntopus.accesscontrol.model.vertex.base.FAILResponse
+import br.com.ntopus.accesscontrol.model.vertex.base.SUCCESSResponse
+import br.com.ntopus.accesscontrol.model.vertex.mapper.AbstractMapper
 import com.google.gson.Gson
 import org.apache.tinkerpop.gremlin.structure.Vertex
 import org.springframework.web.bind.annotation.*
@@ -66,6 +70,19 @@ class ApiVertexController {
         } catch (e: Exception) {
             val response = ERRORResponse(message = "@ACDV-001 Impossible delete Vertex Property ${e.message}")
             return ResponseEntity(gson.toJson(response), HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
+
+    @GetMapping("/")
+    fun get(@RequestParam(value = "id", defaultValue = "0") id: Long): ResponseEntity<Any> {
+        val g = graph.traversal()
+        val gson = GsonBuilder().serializeNulls().create()
+        try {
+            val vertex = g.V(id).next()
+            return ResponseEntity(gson.toJson(SUCCESSResponse(data = AbstractMapper.parseMapVertexById(vertex))), HttpStatus.OK)
+        }
+        catch (e: Exception) {
+            return ResponseEntity(gson.toJson(FAILResponse(data = "@ACGV-001 Vertex not found")), HttpStatus.NOT_FOUND)
         }
     }
 

@@ -29,11 +29,13 @@ class AccessRuleMapper (val properties: Map<String, String>): IMapper {
                 accessRule.property(PropertyLabel.EXPIRATION_DATE.label, this.accessRule.expirationDate)
             }
             graph.tx().commit()
+            this.accessRule.id = accessRule.longId()
         } catch (e: Exception) {
             graph.tx().rollback()
             return FAILResponse(data = "@ARCVE-002 ${e.message.toString()}")
         }
         val response = AssociationResponse(
+                this.accessRule.id!!,
                 this.accessRule.code,
                 this.accessRule.formatDate(),
                 this.accessRule.enable)
@@ -61,9 +63,10 @@ class AccessRuleMapper (val properties: Map<String, String>): IMapper {
             return FAILResponse(data = "@ARUPE-002 ${e.message.toString()}")
         }
         val traversal = graph.traversal().V().hasLabel(VertexLabel.ACCESS_RULE.label)
-                .has(PropertyLabel.CODE.label, this.accessRule.code)
+                .has(PropertyLabel.CODE.label, this.accessRule.code).next()
         val values = AbstractMapper.parseMapVertex(traversal)
         val response = AssociationResponse(
+                accessRule.id() as Long,
                 this.accessRule.code,
                 AbstractMapper.parseMapValueDate(values[PropertyLabel.EXPIRATION_DATE.label].toString())!!,
                 AbstractMapper.parseMapValue(values[PropertyLabel.ENABLE.label].toString()).toBoolean()

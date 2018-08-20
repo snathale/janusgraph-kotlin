@@ -29,11 +29,13 @@ class UnitOrganizationMapper (val properties: Map<String, String>): IMapper {
                 unitOrganization.property(PropertyLabel.OBSERVATION.label, this.unitOrganization.observation)
             }
             graph.tx().commit()
+            this.unitOrganization.id = unitOrganization.longId()
         } catch (e: Exception) {
             graph.tx().rollback()
             return FAILResponse(data = "@UOCVE-002 ${e.message.toString()}")
         }
         val response = AgentResponse(
+                this.unitOrganization.id!!,
                 this.unitOrganization.code,
                 this.unitOrganization.name,
                 this.unitOrganization.formatDate(),
@@ -87,9 +89,10 @@ class UnitOrganizationMapper (val properties: Map<String, String>): IMapper {
             return FAILResponse(data = "@UOUPE-003 ${e.message.toString()}")
         }
         val traversal = graph.traversal().V().hasLabel(VertexLabel.UNIT_ORGANIZATION.label)
-                .has(PropertyLabel.CODE.label, this.unitOrganization.code)
+                .has(PropertyLabel.CODE.label, this.unitOrganization.code).next()
         val values = AbstractMapper.parseMapVertex(traversal)
         val response = AgentResponse(
+                unitOrganization.id() as Long,
                 this.unitOrganization.code,
                 AbstractMapper.parseMapValue(values[PropertyLabel.NAME.label].toString()),
                 AbstractMapper.parseMapValueDate(values[PropertyLabel.CREATION_DATE.label].toString())!!,

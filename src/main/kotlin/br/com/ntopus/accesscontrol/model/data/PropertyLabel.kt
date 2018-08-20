@@ -7,5 +7,6 @@ enum class PropertyLabel(val label: String) {
     ENABLE("enable"),
     CREATION_DATE("creationDate"),
     DESCRIPTION("description"),
-    EXPIRATION_DATE("expirationDate")
+    EXPIRATION_DATE("expirationDate"),
+    ID("id")
 }

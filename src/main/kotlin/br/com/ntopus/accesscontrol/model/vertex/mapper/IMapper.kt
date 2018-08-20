@@ -1,6 +1,5 @@
 package br.com.ntopus.accesscontrol.model.vertex.mapper
 
-import br.com.ntopus.accesscontrol.model.data.EdgeLabel
 import br.com.ntopus.accesscontrol.model.data.Property
 import br.com.ntopus.accesscontrol.model.vertex.base.JSONResponse
 import com.google.gson.annotations.SerializedName
@@ -17,6 +16,7 @@ data class VertexInfo(
 )
 
 data class AgentResponse(
+        @SerializedName("id") val id: Long,
         @SerializedName("code") val code: String,
         @SerializedName("name") val name: String,
         @SerializedName("creationDate") val creationDate: String,
@@ -25,6 +25,7 @@ data class AgentResponse(
 )
 
 data class PermissionResponse(
+        @SerializedName("id") val id: Long,
         @SerializedName("code") val code: String,
         @SerializedName("name") val name: String,
         @SerializedName("creationDate") val creationDate: String,
@@ -33,6 +34,7 @@ data class PermissionResponse(
 )
 
 data class AssociationResponse(
+        @SerializedName("id") val id: Long,
         @SerializedName("code") val code: String,
         @SerializedName("expirationDate") val expirationDate: String?,
         @SerializedName("enable") val enable: Boolean

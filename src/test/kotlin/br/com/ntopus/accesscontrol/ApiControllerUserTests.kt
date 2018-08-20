@@ -13,6 +13,7 @@ import br.com.ntopus.accesscontrol.schema.importer.JanusGraphSchemaImporter
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import org.apache.tinkerpop.gremlin.structure.Direction
+import org.apache.tinkerpop.gremlin.structure.Vertex
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
@@ -40,37 +41,54 @@ class ApiControllerTests: ApiControllerHelper(), IVertexTests {
 
     private val date: Date = Date()
 
+    private var userId: Long = 0
+
+    private var graph =  GraphFactory.setInstance("janusgraph-inmemory.properties")
+
     @Before
     fun setup() {
-        GraphFactory.setInstance("janusgraph-inmemory.properties")
-        val graph = GraphFactory.open()
-        JanusGraphSchemaImporter().writeGraphSONSchema(graph, ClassPathResource("schema.json").file.absolutePath)
-        this.createDefaultUser(date)
+        JanusGraphSchemaImporter().writeGraphSONSchema(this.graph.open(), ClassPathResource("schema.json").file.absolutePath)
+        this.userId = this.createDefaultUser(date)!!
         this.createDefaultAccessRule(Date())
+    }
+
+    @Test
+    override fun getVertex() {
+        val gson = Gson()
+        val response =  restTemplate.getForEntity("${this.createVertexBaseUrl(this.port)}/?id=${this.userId}",  String::class.java)
+        val obj = gson.fromJson(response.body, VertexSuccess::class.java)
+        val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
+        val creationDate = format.parse(obj.data["creationDate"].toString())
+        Assert.assertEquals(200, response.statusCode.value())
+        Assert.assertEquals(this.userId.toString(), obj.data["id"])
+        Assert.assertEquals("UserTest", obj.data["name"])
+        Assert.assertEquals("This is UserTest", obj.data["observation"])
+        Assert.assertEquals(true, obj.data["enable"]!!.toBoolean())
+        Assert.assertEquals(format.format(date), format.format(creationDate))
     }
 
     @Test
     override fun createVertex() {
         val gson = Gson()
-        val initialDate = Date().time
         val properties:List<Property> = listOf(Property("code", "2"), Property("name", "test"))
         val user = VertexData("user", properties)
         val response =  restTemplate.postForEntity("${this.createVertexBaseUrl(this.port)}/add", user, String::class.java)
         val obj: CreateAgentSuccess = gson.fromJson(response.body, CreateAgentSuccess::class.java)
         val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
         val finalDate = format.parse(obj.data.creationDate).time
-        val condition = finalDate > initialDate
         Assert.assertEquals(200, response.statusCode.value())
-        Assert.assertFalse(condition)
+        Assert.assertNotNull(finalDate)
         Assert.assertEquals("test", obj.data.name)
         Assert.assertEquals("2", obj.data.code)
         Assert.assertEquals("", obj.data.observation)
         Assert.assertEquals(true, obj.data.enable)
+        Assert.assertNotNull(obj.data.id)
         val g = GraphFactory.open().traversal()
-        val userStorage = g.V().hasLabel(VertexLabel.USER.label).has(PropertyLabel.CODE.label, "2")
+        val userStorage = g.V().hasLabel(VertexLabel.USER.label).has(PropertyLabel.CODE.label, "2").next()
         val values = AbstractMapper.parseMapVertex(userStorage)
         Assert.assertEquals("test", AbstractMapper.parseMapValue(values["name"].toString()))
         Assert.assertEquals("2", AbstractMapper.parseMapValue(values["code"].toString()))
+        Assert.assertEquals(obj.data.id.toString(), AbstractMapper.parseMapValue(values["id"].toString()))
         Assert.assertEquals("", AbstractMapper.parseMapValue(values["observation"].toString()))
         Assert.assertEquals(true, AbstractMapper.parseMapValue(values["enable"].toString()).toBoolean())
     }
@@ -95,17 +113,18 @@ class ApiControllerTests: ApiControllerHelper(), IVertexTests {
         Assert.assertEquals("This is a test", obj.data.observation)
         Assert.assertEquals(false, obj.data.enable)
         val g = GraphFactory.open().traversal()
-        val userStorage = g.V().hasLabel("user").has("code", "2")
+        val userStorage = g.V().hasLabel("user").has("code", "2").next()
         val values = AbstractMapper.parseMapVertex(userStorage)
         Assert.assertEquals("New User", AbstractMapper.parseMapValue(values["name"].toString()))
         Assert.assertEquals("2", AbstractMapper.parseMapValue(values["code"].toString()))
+        Assert.assertEquals(obj.data.id.toString(), AbstractMapper.parseMapValue(values["id"].toString()))
         Assert.assertEquals("This is a test", AbstractMapper.parseMapValue(values["observation"].toString()))
         Assert.assertEquals(false, AbstractMapper.parseMapValue(values["enable"].toString()).toBoolean())
         Assert.assertEquals("", AbstractMapper.parseMapValue(values["description"].toString()))
     }
 
     @Test
-    override fun cantCeateVertexThatExist() {
+    override fun cantCreateVertexThatExist() {
         val gson = Gson()
         val properties: List<Property> = listOf(Property("code", "1"), Property("name", "Test"))
         val user = VertexData("user", properties)
@@ -128,17 +147,13 @@ class ApiControllerTests: ApiControllerHelper(), IVertexTests {
         Assert.assertEquals("FAIL", obj.status)
         Assert.assertEquals("@UCVE-001 Empty User properties", obj.data)
         val g = GraphFactory.open().traversal()
-        val userStorage = g.V().hasLabel(VertexLabel.USER.label).has(PropertyLabel.CODE.label, "2")
-        val values = AbstractMapper.parseMapVertex(userStorage)
-        Assert.assertEquals(0, values.size)
+        Assert.assertFalse(g.V().hasLabel(VertexLabel.USER.label).has(PropertyLabel.CODE.label, "2").hasNext())
         val name: List<Property> = listOf(Property("name", "test"))
         val user1 = VertexData("user", name)
         val response1 =  restTemplate.postForEntity("${this.createVertexBaseUrl(this.port)}/add", user1, String::class.java)
         val obj1 = gson.fromJson(response1.body, FAILResponse::class.java)
         Assert.assertEquals("@UCVE-001 Empty User properties", obj1.data)
-        val userStorage1 = g.V().hasLabel(VertexLabel.USER.label).has(PropertyLabel.CODE.label, "2")
-        val values1 = AbstractMapper.parseMapVertex(userStorage1)
-        Assert.assertEquals(0, values1.size)
+        Assert.assertFalse(g.V().hasLabel(VertexLabel.USER.label).has(PropertyLabel.CODE.label, "2").hasNext())
     }
 
     @Test
@@ -153,9 +168,7 @@ class ApiControllerTests: ApiControllerHelper(), IVertexTests {
         Assert.assertEquals("FAIL", obj.status)
         Assert.assertEquals("@UCEE-002 Impossible find User with code ${source.code}", obj.data)
         val g = GraphFactory.open().traversal()
-        val user = g.V().hasLabel(VertexLabel.USER.label).has(PropertyLabel.CODE.label, "2")
-        val values = AbstractMapper.parseMapVertex(user)
-        Assert.assertEquals(0, values.size)
+        Assert.assertFalse(g.V().hasLabel(VertexLabel.USER.label).has(PropertyLabel.CODE.label, "2").hasNext())
     }
 
     @Test
@@ -185,10 +198,10 @@ class ApiControllerTests: ApiControllerHelper(), IVertexTests {
         Assert.assertEquals(200, edgeResponse.statusCode.value())
         this.assertEdgeCreatedSuccess(source, target, edgeObj, "associated")
         val g = GraphFactory.open().traversal()
-        val user = g.V().hasLabel(VertexLabel.USER.label).has(PropertyLabel.CODE.label, "1")
+        val user = g.V().hasLabel(VertexLabel.USER.label).has(PropertyLabel.CODE.label, "1").next()
         val userValues = AbstractMapper.parseMapVertex(user)
         Assert.assertTrue(userValues.size > 0)
-        val accessRule = g.V().hasLabel(VertexLabel.ACCESS_RULE.label).has(PropertyLabel.CODE.label, "1")
+        val accessRule = g.V().hasLabel(VertexLabel.ACCESS_RULE.label).has(PropertyLabel.CODE.label, "1").next()
         val accessRuleValues = AbstractMapper.parseMapVertex(accessRule)
         Assert.assertTrue(accessRuleValues.size > 0)
         val edgeUser = g.V().hasLabel(VertexLabel.USER.label).has(PropertyLabel.CODE.label, "1").next()
@@ -268,9 +281,7 @@ class ApiControllerTests: ApiControllerHelper(), IVertexTests {
         Assert.assertEquals("FAIL", obj.status)
         Assert.assertEquals("@UCEE-003 Impossible find Access Rule with code ${target.code}", obj.data)
         val g = GraphFactory.open().traversal()
-        val accessRule = g.V().hasLabel(VertexLabel.ACCESS_RULE.label).has(PropertyLabel.CODE.label, "2")
-        val values = AbstractMapper.parseMapVertex(accessRule)
-        Assert.assertEquals(0, values.size)
+        Assert.assertFalse(g.V().hasLabel(VertexLabel.ACCESS_RULE.label).has(PropertyLabel.CODE.label, "2").hasNext())
     }
 
 }

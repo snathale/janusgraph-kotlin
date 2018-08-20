@@ -1,10 +1,7 @@
 package br.com.ntopus.accesscontrol
 
-import br.com.ntopus.accesscontrol.helper.ApiControllerHelper
+import br.com.ntopus.accesscontrol.helper.*
 
-import br.com.ntopus.accesscontrol.helper.CreateEdgeSuccess
-import br.com.ntopus.accesscontrol.helper.CreatePermissionSuccess
-import br.com.ntopus.accesscontrol.helper.IVertexTests
 import br.com.ntopus.accesscontrol.model.GraphFactory
 import br.com.ntopus.accesscontrol.model.data.Property
 import br.com.ntopus.accesscontrol.model.data.PropertyLabel
@@ -18,6 +15,7 @@ import br.com.ntopus.accesscontrol.schema.importer.JanusGraphSchemaImporter
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import org.apache.tinkerpop.gremlin.structure.Direction
+import org.apache.tinkerpop.gremlin.structure.Vertex
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
@@ -35,7 +33,6 @@ import java.util.*
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class ApiControllerAccessGroupTests: ApiControllerHelper(), IVertexTests {
-
     @Autowired
     lateinit var restTemplate: TestRestTemplate
 
@@ -44,12 +41,14 @@ class ApiControllerAccessGroupTests: ApiControllerHelper(), IVertexTests {
 
     private val date: Date = Date()
 
+    private var accessGroupId: Long = 0
+
+    private var graph =  GraphFactory.setInstance("janusgraph-inmemory.properties")
+
     @Before
     fun setup() {
-        GraphFactory.setInstance("janusgraph-inmemory.properties")
-        val graph = GraphFactory.open()
-        JanusGraphSchemaImporter().writeGraphSONSchema(graph, ClassPathResource("schema.json").file.absolutePath)
-        this.createDefaultAccessGroup(date)
+        JanusGraphSchemaImporter().writeGraphSONSchema(graph.open(), ClassPathResource("schema.json").file.absolutePath)
+        this.accessGroupId = this.createDefaultAccessGroup(date)!!
         this.createDefaultRules(Date())
     }
 
@@ -71,12 +70,38 @@ class ApiControllerAccessGroupTests: ApiControllerHelper(), IVertexTests {
         Assert.assertEquals("This is a description", obj.data.description)
         Assert.assertEquals(false, obj.data.enable)
         val g = GraphFactory.open().traversal()
-        val userStorage = g.V().hasLabel("accessGroup").has("code", "2")
+        val userStorage = g.V().hasLabel("accessGroup").has("code", "2").next()
         val values = AbstractMapper.parseMapVertex(userStorage)
         Assert.assertEquals("New Access Group", AbstractMapper.parseMapValue(values["name"].toString()))
         Assert.assertEquals("2", AbstractMapper.parseMapValue(values["code"].toString()))
         Assert.assertEquals("This is a description", AbstractMapper.parseMapValue(values["description"].toString()))
         Assert.assertEquals(false, AbstractMapper.parseMapValue(values["enable"].toString()).toBoolean())
+    }
+
+    @Test
+    override fun getVertex() {
+        val gson = Gson()
+        val response =  restTemplate.getForEntity("${this.createVertexBaseUrl(this.port)}/?id=${this.accessGroupId}",  String::class.java)
+        val obj = gson.fromJson(response.body, VertexSuccess::class.java)
+        val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
+        val creationDate = format.parse(obj.data["creationDate"].toString())
+        Assert.assertEquals(200, response.statusCode.value())
+        Assert.assertEquals(this.accessGroupId.toString(), obj.data["id"])
+        Assert.assertEquals("Operator", obj.data["name"])
+        Assert.assertEquals("1", obj.data["code"])
+        Assert.assertEquals("This is a Operator Access Group", obj.data["description"])
+        Assert.assertEquals(true, obj.data["enable"]!!.toBoolean())
+        Assert.assertEquals(format.format(date), format.format(creationDate))
+    }
+
+    @Test
+    fun cantGetVertexThatNotExist() {
+        val gson = Gson()
+        val response =  restTemplate.getForEntity("${this.createVertexBaseUrl(this.port)}/?id=1",  String::class.java)
+        val obj = gson.fromJson(response.body, FAILResponse::class.java)
+        Assert.assertEquals(404, response.statusCode.value())
+        Assert.assertEquals("FAIL", obj.status)
+        Assert.assertEquals("@ACGV-001 Vertex not found", obj.data)
     }
 
     @Test
@@ -98,7 +123,7 @@ class ApiControllerAccessGroupTests: ApiControllerHelper(), IVertexTests {
         Assert.assertEquals("This is a description", obj.data.description)
         Assert.assertEquals(false, obj.data.enable)
         val g = GraphFactory.open().traversal()
-        val userStorage = g.V().hasLabel("accessGroup").has("code", "2")
+        val userStorage = g.V().hasLabel("accessGroup").has("code", "2").next()
         val values = AbstractMapper.parseMapVertex(userStorage)
         Assert.assertEquals("New Access Group", AbstractMapper.parseMapValue(values["name"].toString()))
         Assert.assertEquals("2", AbstractMapper.parseMapValue(values["code"].toString()))
@@ -108,7 +133,7 @@ class ApiControllerAccessGroupTests: ApiControllerHelper(), IVertexTests {
     }
 
     @Test
-    override fun cantCeateVertexThatExist() {
+    override fun cantCreateVertexThatExist() {
         val gson = Gson()
         val properties: List<Property> = listOf(
                 Property("code", "1"),
@@ -130,17 +155,13 @@ class ApiControllerAccessGroupTests: ApiControllerHelper(), IVertexTests {
         val obj = gson.fromJson(response.body, FAILResponse::class.java)
         Assert.assertEquals("@AGCVE-001 Empty Access Group properties", obj.data)
         val g = GraphFactory.open().traversal()
-        val accessGroupStorage = g.V().hasLabel("accessGroup").has("code", "2")
-        val values = AbstractMapper.parseMapVertex(accessGroupStorage)
-        Assert.assertEquals(0, values.size)
+        Assert.assertFalse(g.V().hasLabel("accessGroup").has("code", "2").hasNext())
         val name: List<Property> = listOf(Property("name", "test"))
         val accessGroup1 = VertexData("accessGroup", name)
         val response1 =  restTemplate.postForEntity("${this.createVertexBaseUrl(this.port)}/add", accessGroup1, String::class.java)
         val obj1 = gson.fromJson(response1.body, FAILResponse::class.java)
         Assert.assertEquals("@AGCVE-001 Empty Access Group properties", obj1.data)
-        val accessGroupStorage1 = g.V().hasLabel("accessGroup").has("code", "2")
-        val values1 = AbstractMapper.parseMapVertex(accessGroupStorage1)
-        Assert.assertEquals(0, values1.size)
+        Assert.assertFalse(g.V().hasLabel("accessGroup").has("code", "2").hasNext())
     }
 
     @Test

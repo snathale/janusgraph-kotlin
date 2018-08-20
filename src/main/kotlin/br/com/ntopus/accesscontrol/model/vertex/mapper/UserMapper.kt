@@ -30,11 +30,13 @@ class UserMapper (val properties: Map<String, String>): IMapper {
             user.property(PropertyLabel.CREATION_DATE.label, this.user.creationDate)
             user.property(PropertyLabel.ENABLE.label, this.user.enable)
             graph.tx().commit()
+            this.user.id = user.longId()
         } catch (e: Exception) {
             graph.tx().rollback()
             return FAILResponse(data = "@UCVE-002 ${e.message.toString()}")
         }
         val response = AgentResponse(
+                this.user.id!!,
                 this.user.code, this.user.name, this.user.formatDate(), this.user.enable, this.user.observation
         )
         return SUCCESSResponse(data = response)
@@ -77,9 +79,11 @@ class UserMapper (val properties: Map<String, String>): IMapper {
             graph.tx().rollback()
             return FAILResponse(data = "@UUPE-004 ${e.message.toString()}")
         }
-        val traversal = graph.traversal().V().hasLabel(VertexLabel.USER.label).has(PropertyLabel.CODE.label, this.user.code)
+        val traversal = graph.traversal().V().
+                hasLabel(VertexLabel.USER.label).has(PropertyLabel.CODE.label, this.user.code).next()
         val values = AbstractMapper.parseMapVertex(traversal)
         val response = AgentResponse(
+                user.id() as Long,
                 this.user.code,
                 AbstractMapper.parseMapValue(values[PropertyLabel.NAME.label].toString()),
                 AbstractMapper.parseMapValueDate(values[PropertyLabel.CREATION_DATE.label].toString())!!,

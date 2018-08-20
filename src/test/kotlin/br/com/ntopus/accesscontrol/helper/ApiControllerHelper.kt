@@ -4,6 +4,8 @@ import br.com.ntopus.accesscontrol.model.GraphFactory
 import br.com.ntopus.accesscontrol.model.data.PropertyLabel
 import br.com.ntopus.accesscontrol.model.data.VertexLabel
 import br.com.ntopus.accesscontrol.model.vertex.mapper.*
+import com.google.gson.annotations.SerializedName
+import com.google.gson.reflect.TypeToken
 import org.junit.Assert
 import java.text.SimpleDateFormat
 import java.util.*
@@ -12,6 +14,7 @@ data class CreateAgentSuccess(val status: String, val data: AgentResponse)
 data class CreatePermissionSuccess(val status: String, val data: PermissionResponse)
 data class CreateAssociationSuccess(val status: String, val data: AssociationResponse)
 data class CreateEdgeSuccess(val status: String, val data: EdgeCreated)
+data class VertexSuccess(val status: String, val data: MutableMap<String, String>)
 abstract class ApiControllerHelper {
 
     fun createVertexBaseUrl(port: Int): String {
@@ -22,9 +25,9 @@ abstract class ApiControllerHelper {
         return "http://localhost:$port/api/v1/edge"
     }
 
-    fun createDefaultOrganization(date: Date) {
+    fun createDefaultOrganization(date: Date): Long? {
         val graph = GraphFactory.open()
-        try {
+        return try {
             val organization = graph.addVertex(VertexLabel.ORGANIZATION.label)
             organization.property(PropertyLabel.NAME.label, "Kofre")
             organization.property(PropertyLabel.CODE.label, 1)
@@ -32,14 +35,16 @@ abstract class ApiControllerHelper {
             organization.property(PropertyLabel.CREATION_DATE.label, date)
             organization.property(PropertyLabel.ENABLE.label, true)
             graph.tx().commit()
+            organization.longId()
         } catch (e: Exception) {
             graph.tx().rollback()
+            null
         }
     }
 
-    fun createDefaultUnitOrganization(date: Date) {
+    fun createDefaultUnitOrganization(date: Date): Long? {
         val graph = GraphFactory.open()
-        try {
+        return try {
             val unitOrganization = graph.addVertex(VertexLabel.UNIT_ORGANIZATION.label)
             unitOrganization.property(PropertyLabel.NAME.label, "Bahia")
             unitOrganization.property(PropertyLabel.CODE.label, 1)
@@ -47,29 +52,33 @@ abstract class ApiControllerHelper {
             unitOrganization.property(PropertyLabel.CREATION_DATE.label, date)
             unitOrganization.property(PropertyLabel.ENABLE.label, true)
             graph.tx().commit()
+            unitOrganization.longId()
         } catch (e: Exception) {
             graph.tx().rollback()
+            null
         }
     }
 
-    fun createDefaultGroup(date: Date) {
+    fun createDefaultGroup(date: Date): Long? {
         val graph = GraphFactory.open()
-        try {
-            val group1 = graph.addVertex(VertexLabel.GROUP.label)
-            group1.property(PropertyLabel.NAME.label, "Marketing")
-            group1.property(PropertyLabel.CODE.label, 1)
-            group1.property(PropertyLabel.OBSERVATION.label, "This is a Marketing Group")
-            group1.property(PropertyLabel.CREATION_DATE.label, date)
-            group1.property(PropertyLabel.ENABLE.label, true)
+        return try {
+            val group = graph.addVertex(VertexLabel.GROUP.label)
+            group.property(PropertyLabel.NAME.label, "Marketing")
+            group.property(PropertyLabel.CODE.label, 1)
+            group.property(PropertyLabel.OBSERVATION.label, "This is a Marketing Group")
+            group.property(PropertyLabel.CREATION_DATE.label, date)
+            group.property(PropertyLabel.ENABLE.label, true)
             graph.tx().commit()
+            group.longId()
         } catch (e: Exception) {
             graph.tx().rollback()
+            null
         }
     }
 
-    fun createDefaultUser(date: Date) {
+    fun createDefaultUser(date: Date): Long? {
         val graph = GraphFactory.open()
-        try {
+        return try {
             val user = graph.addVertex(VertexLabel.USER.label)
             user.property(PropertyLabel.NAME.label, "UserTest")
             user.property(PropertyLabel.CODE.label, 1)
@@ -77,27 +86,31 @@ abstract class ApiControllerHelper {
             user.property(PropertyLabel.CREATION_DATE.label, date)
             user.property(PropertyLabel.ENABLE.label, true)
             graph.tx().commit()
+            user.longId()
         } catch (e: Exception) {
             graph.tx().rollback()
+            null
         }
     }
 
-    fun createDefaultAccessRule(date: Date) {
+    fun createDefaultAccessRule(date: Date): Long? {
         val graph = GraphFactory.open()
-        try {
+        return try {
             val accessRule = graph.addVertex(VertexLabel.ACCESS_RULE.label)
             accessRule.property(PropertyLabel.CODE.label, 1)
             accessRule.property(PropertyLabel.ENABLE.label, true)
             accessRule.property(PropertyLabel.EXPIRATION_DATE.label, date)
             graph.tx().commit()
+            accessRule.longId()
         } catch (e: Exception) {
             graph.tx().rollback()
+            null
         }
     }
 
-    fun createDefaultAccessGroup(date: Date) {
+    fun createDefaultAccessGroup(date: Date): Long? {
         val graph = GraphFactory.open()
-        try {
+        return try {
             val unitOrganization = graph.addVertex(VertexLabel.ACCESS_GROUP.label)
             unitOrganization.property(PropertyLabel.NAME.label, "Operator")
             unitOrganization.property(PropertyLabel.CODE.label, 1)
@@ -105,14 +118,16 @@ abstract class ApiControllerHelper {
             unitOrganization.property(PropertyLabel.CREATION_DATE.label, date)
             unitOrganization.property(PropertyLabel.ENABLE.label, true)
             graph.tx().commit()
+            unitOrganization.longId()
         } catch (e: Exception) {
             graph.tx().rollback()
+            null
         }
     }
 
-    fun createDefaultRules(date: Date) {
+    fun createDefaultRules(date: Date): Long? {
         val graph = GraphFactory.open()
-        try {
+        return try {
             val rule1 = graph.addVertex(VertexLabel.RULE.label)
             rule1.property(PropertyLabel.NAME.label, "ADD_USER")
             rule1.property(PropertyLabel.CODE.label, 1)
@@ -126,8 +141,10 @@ abstract class ApiControllerHelper {
             rule2.property(PropertyLabel.CREATION_DATE.label, this.addMinutes(date, 1))
             rule2.property(PropertyLabel.ENABLE.label, true)
             graph.tx().commit()
+            rule1.longId()
         } catch (e: Exception) {
             graph.tx().rollback()
+            null
         }
     }
 
@@ -157,7 +174,7 @@ abstract class ApiControllerHelper {
     fun assertUserMapper(code: String, name: String, creationDate: Date, observation: String, enable: Boolean) {
         val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
         val g = GraphFactory.open().traversal()
-        val userStorage = g.V().hasLabel("user").has("code", code)
+        val userStorage = g.V().hasLabel("user").has("code", code).next()
         val values = AbstractMapper.parseMapVertex(userStorage)
         Assert.assertEquals(name, AbstractMapper.parseMapValue(values["name"].toString()))
         Assert.assertEquals(code, AbstractMapper.parseMapValue(values["code"].toString()))
@@ -188,7 +205,7 @@ abstract class ApiControllerHelper {
     fun assertAccessRuleMapper(code: String, enable: Boolean, expirationDate: Date? = null) {
         val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
         val g = GraphFactory.open().traversal()
-        val vertex = g.V().hasLabel("accessRule").has("code", code)
+        val vertex = g.V().hasLabel("accessRule").has("code", code).next()
         val values = AbstractMapper.parseMapVertex(vertex)
         if (expirationDate!=null){
             Assert.assertEquals(format.format(expirationDate), AbstractMapper.parseMapValueDate(values["expirationDate"].toString()))
@@ -200,7 +217,7 @@ abstract class ApiControllerHelper {
     fun assertAccessGroupMapper(code: String, name: String, description: String, creationDate: Date, enable: Boolean) {
         val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
         val g = GraphFactory.open().traversal()
-        val vertex = g.V().hasLabel("accessGroup").has("code", code)
+        val vertex = g.V().hasLabel("accessGroup").has("code", code).next()
         val values = AbstractMapper.parseMapVertex(vertex)
         Assert.assertEquals(format.format(creationDate), AbstractMapper.parseMapValueDate(values["creationDate"].toString()))
         Assert.assertEquals(name, AbstractMapper.parseMapValue(values["name"].toString()))
@@ -223,7 +240,7 @@ abstract class ApiControllerHelper {
     fun assertRuleMapper(code: String, name: String, description: String, creationDate: Date, enable: Boolean) {
         val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
         val g = GraphFactory.open().traversal()
-        val vertex = g.V().hasLabel("rule").has("code", code)
+        val vertex = g.V().hasLabel("rule").has("code", code).next()
         val values = AbstractMapper.parseMapVertex(vertex)
         Assert.assertEquals(format.format(creationDate), AbstractMapper.parseMapValueDate(values["creationDate"].toString()))
         Assert.assertEquals(name, AbstractMapper.parseMapValue(values["name"].toString()))

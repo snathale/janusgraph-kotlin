@@ -18,6 +18,9 @@ abstract class ICommon(properties: Map<String, String>) {
     @SerializedName("enable")
     var enable: Boolean = if (!this.toString(properties["enable"]).isEmpty()) properties["enable"]!!.toBoolean() else true
 
+    @SerializedName("id")
+    var id: Long? = null
+
     fun toString(value: Any?): String {
         if (value.toString() == "null") {
             return ""

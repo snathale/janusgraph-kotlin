@@ -30,11 +30,13 @@ class GroupMapper (val properties: Map<String, String>): IMapper {
             group.property(PropertyLabel.CREATION_DATE.label, this.group.creationDate)
             group.property(PropertyLabel.ENABLE.label, this.group.enable)
             graph.tx().commit()
+            this.group.id = group.longId()
         } catch (e: Exception) {
             graph.tx().rollback()
             return FAILResponse(data = "@GCVE-002 ${e.message.toString()}")
         }
         val response = AgentResponse(
+                this.group.id!!,
                 this.group.code, this.group.name,
                 this.group.formatDate(), this.group.enable, this.group.observation
         )
@@ -57,9 +59,11 @@ class GroupMapper (val properties: Map<String, String>): IMapper {
             graph.tx().rollback()
             return FAILResponse(data = "@GUPE-003 ${e.message.toString()}")
         }
-        val traversal = graph.traversal().V().hasLabel(VertexLabel.GROUP.label).has(PropertyLabel.CODE.label, this.group.code)
+        val traversal = graph.traversal().V().hasLabel(VertexLabel.GROUP.label)
+                .has(PropertyLabel.CODE.label, this.group.code).next()
         val values = AbstractMapper.parseMapVertex(traversal)
         val response = AgentResponse(
+                group.id() as Long,
                 this.group.code,
                 AbstractMapper.parseMapValue(values[PropertyLabel.NAME.label].toString()),
                 AbstractMapper.parseMapValueDate(values[PropertyLabel.CREATION_DATE.label].toString())!!,

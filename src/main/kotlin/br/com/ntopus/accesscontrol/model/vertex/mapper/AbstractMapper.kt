@@ -1,5 +1,6 @@
 package br.com.ntopus.accesscontrol.model.vertex.mapper
 
+import br.com.ntopus.accesscontrol.model.data.PropertyLabel
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal
 import org.apache.tinkerpop.gremlin.structure.Edge
 import org.apache.tinkerpop.gremlin.structure.Vertex
@@ -12,9 +13,11 @@ object AbstractMapper {
         return value.replace("[","").replace("]","")
     }
 
-    fun parseMapVertex(vertex: GraphTraversal<Vertex, Vertex>): Map<String, String> {
-        var values: Map<String, String> = mapOf()
-        vertex.valueMap<String>().iterator().forEach {values+=it}
+    fun parseMapVertex(vertex: Vertex): Map<String, String> {
+        val values: MutableMap<String, String> = mutableMapOf("id" to vertex.id().toString())
+        for (item in vertex.properties<Vertex>()) {
+            values[item.key()] = this.toString(item.value())
+        }
         return values
     }
 
@@ -30,4 +33,24 @@ object AbstractMapper {
         edge.valueMap<String>().iterator().forEach {values+=it}
         return values
     }
+
+    fun parseMapVertexById(vertex: Vertex): Map<String, String> {
+        val values: MutableMap<String, String> = mutableMapOf("id" to vertex.id().toString())
+        for (item in vertex.properties<Vertex>()) {
+            if (item.key() == PropertyLabel.EXPIRATION_DATE.label || item.key() == PropertyLabel.CREATION_DATE.label ){
+                values[item.key()] = this.parseMapValueDate(item.value().toString())!!
+                continue
+            }
+            values[item.key()] = this.toString(item.value())
+        }
+        return values
+    }
+
+    fun toString(value: Any?): String {
+        if (value.toString() == "null") {
+            return ""
+        }
+        return value.toString()
+    }
+
 }

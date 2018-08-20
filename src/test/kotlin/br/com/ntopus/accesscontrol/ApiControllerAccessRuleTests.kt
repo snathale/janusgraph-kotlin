@@ -1,9 +1,6 @@
 package br.com.ntopus.accesscontrol
 
-import br.com.ntopus.accesscontrol.helper.ApiControllerHelper
-import br.com.ntopus.accesscontrol.helper.CreateAssociationSuccess
-import br.com.ntopus.accesscontrol.helper.CreateEdgeSuccess
-import br.com.ntopus.accesscontrol.helper.IVertexTests
+import br.com.ntopus.accesscontrol.helper.*
 import br.com.ntopus.accesscontrol.model.GraphFactory
 import br.com.ntopus.accesscontrol.model.data.Property
 import br.com.ntopus.accesscontrol.model.data.PropertyLabel
@@ -14,8 +11,10 @@ import br.com.ntopus.accesscontrol.model.vertex.base.SUCCESSResponse
 import br.com.ntopus.accesscontrol.model.vertex.mapper.AbstractMapper
 import br.com.ntopus.accesscontrol.model.vertex.mapper.VertexInfo
 import br.com.ntopus.accesscontrol.schema.importer.JanusGraphSchemaImporter
+import com.google.gson.FieldNamingPolicy
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.google.gson.annotations.SerializedName
 import org.apache.tinkerpop.gremlin.structure.Direction
 import org.junit.Assert
 import org.junit.Before
@@ -35,7 +34,6 @@ import java.util.*
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class ApiControllerAccessRuleTests: ApiControllerHelper(), IVertexTests {
-
     @Autowired
     lateinit var restTemplate: TestRestTemplate
 
@@ -43,18 +41,34 @@ class ApiControllerAccessRuleTests: ApiControllerHelper(), IVertexTests {
     private val port: Int = 0
 
     private val date: Date = Date()
+
     private val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
+
+    private var accessRuleId: Long = 0
+
+    private var graph = GraphFactory.setInstance("janusgraph-inmemory.properties")
 
     @Before
     fun setup() {
-        GraphFactory.setInstance("janusgraph-inmemory.properties")
-        val graph = GraphFactory.open()
-        JanusGraphSchemaImporter().writeGraphSONSchema(graph, ClassPathResource("schema.json").file.absolutePath)
+        JanusGraphSchemaImporter().writeGraphSONSchema(graph.open(), ClassPathResource("schema.json").file.absolutePath)
         this.createDefaultOrganization(Date())
         this.createDefaultUnitOrganization(Date())
         this.createDefaultGroup(Date())
         this.createDefaultAccessGroup(Date())
-        this.createDefaultAccessRule(date)
+        this.accessRuleId = this.createDefaultAccessRule(date)!!
+    }
+
+    @Test
+    override fun getVertex() {
+        val gson = GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create()
+        val response =  restTemplate.getForEntity("${this.createVertexBaseUrl(this.port)}/?id=${this.accessRuleId}",  String::class.java)
+        val obj = gson.fromJson(response.body, VertexSuccess::class.java)
+        val expirationDate = format.parse(obj.data["expirationDate"].toString())
+        Assert.assertEquals(200, response.statusCode.value())
+        Assert.assertEquals(this.accessRuleId.toString(), obj.data["id"])
+        Assert.assertEquals("1", obj.data["code"])
+        Assert.assertEquals(true, obj.data["enable"]!!.toBoolean())
+        Assert.assertEquals(format.format(date), format.format(expirationDate))
     }
 
     @Test
@@ -84,7 +98,7 @@ class ApiControllerAccessRuleTests: ApiControllerHelper(), IVertexTests {
         Assert.assertEquals("2", obj.data.code)
         Assert.assertEquals(true, obj.data.enable)
         val g = GraphFactory.open().traversal()
-        val userStorage = g.V().hasLabel(VertexLabel.ACCESS_RULE.label).has(PropertyLabel.CODE.label, "2")
+        val userStorage = g.V().hasLabel(VertexLabel.ACCESS_RULE.label).has(PropertyLabel.CODE.label, "2").next()
         val values = AbstractMapper.parseMapVertex(userStorage)
         Assert.assertEquals("", AbstractMapper.parseMapValue(values["expirationDate"].toString()))
         Assert.assertEquals("2", AbstractMapper.parseMapValue(values["code"].toString()))
@@ -105,7 +119,7 @@ class ApiControllerAccessRuleTests: ApiControllerHelper(), IVertexTests {
         Assert.assertEquals("2", obj.data.code)
         Assert.assertEquals(true, obj.data.enable)
         val g = GraphFactory.open().traversal()
-        val userStorage = g.V().hasLabel(VertexLabel.ACCESS_RULE.label).has(PropertyLabel.CODE.label, "2")
+        val userStorage = g.V().hasLabel(VertexLabel.ACCESS_RULE.label).has(PropertyLabel.CODE.label, "2").next()
         val values = AbstractMapper.parseMapVertex(userStorage)
         Assert.assertEquals("", AbstractMapper.parseMapValue(values["expirationDate"].toString()))
         Assert.assertEquals("2", AbstractMapper.parseMapValue(values["code"].toString()))
@@ -114,7 +128,7 @@ class ApiControllerAccessRuleTests: ApiControllerHelper(), IVertexTests {
     }
 
     @Test
-    override fun cantCeateVertexThatExist() {
+    override fun cantCreateVertexThatExist() {
         val gson = Gson()
         val properties: List<Property> = listOf(Property("code", "1"), Property("expirationDate", format.format(this.date)))
         val accessRule = VertexData("accessRule", properties)
@@ -122,7 +136,7 @@ class ApiControllerAccessRuleTests: ApiControllerHelper(), IVertexTests {
         val obj = gson.fromJson(response.body, FAILResponse::class.java)
         Assert.assertEquals("@ARCVE-002 Adding this property for key [code] and value [1] violates a uniqueness constraint [vByAccessRuleCode]", obj.data)
         val g = GraphFactory.open().traversal()
-        val accessRuleStorage = g.V().hasLabel("accessRule").has("code", "1")
+        val accessRuleStorage = g.V().hasLabel("accessRule").has("code", "1").next()
         val values = AbstractMapper.parseMapVertex(accessRuleStorage)
         Assert.assertEquals("1", AbstractMapper.parseMapValue(values["code"].toString()))
         Assert.assertEquals(format.format(this.date), AbstractMapper.parseMapValueDate(values["expirationDate"].toString()))
@@ -138,9 +152,9 @@ class ApiControllerAccessRuleTests: ApiControllerHelper(), IVertexTests {
         val obj = gson.fromJson(response.body, FAILResponse::class.java)
         Assert.assertEquals("@ARCVE-001 Empty Access Rule properties", obj.data)
         val g = GraphFactory.open().traversal()
-        val accessRuleStorage = g.V().hasLabel("accessRule")
+        val accessRuleStorage = g.V().hasLabel("accessRule").next()
         val values = AbstractMapper.parseMapVertex(accessRuleStorage)
-        Assert.assertEquals(3, values.size)
+        Assert.assertEquals(4, values.size)
         Assert.assertEquals("1", AbstractMapper.parseMapValue(values["code"].toString()))
         Assert.assertEquals(true, AbstractMapper.parseMapValue(values["enable"].toString()).toBoolean())
         val expirationDate = this.addDays(Date(), 1)
@@ -150,9 +164,9 @@ class ApiControllerAccessRuleTests: ApiControllerHelper(), IVertexTests {
         val response1 =  restTemplate.postForEntity("${this.createVertexBaseUrl(this.port)}/add", organization1, String::class.java)
         val obj1 = gson.fromJson(response1.body, FAILResponse::class.java)
         Assert.assertEquals("@ARCVE-001 Empty Access Rule properties", obj1.data)
-        val accessRuleStorage1 = g.V().hasLabel("accessRule")
+        val accessRuleStorage1 = g.V().hasLabel("accessRule").next()
         val values1 = AbstractMapper.parseMapVertex(accessRuleStorage1)
-        Assert.assertEquals(3, values1.size)
+        Assert.assertEquals(4, values1.size)
         Assert.assertEquals("1", AbstractMapper.parseMapValue(values1["code"].toString()))
         Assert.assertEquals(true, AbstractMapper.parseMapValue(values1["enable"].toString()).toBoolean())
     }
@@ -237,10 +251,10 @@ class ApiControllerAccessRuleTests: ApiControllerHelper(), IVertexTests {
         val edgeObj: CreateEdgeSuccess = gson.fromJson(edgeResponse.body, CreateEdgeSuccess::class.java)
         this.assertEdgeCreatedSuccess(source, target, edgeObj, "own")
         val g = GraphFactory.open().traversal()
-        val accessRule = g.V().hasLabel("accessRule").has("code", "1")
+        val accessRule = g.V().hasLabel("accessRule").has("code", "1").next()
         val accessRuleValues = AbstractMapper.parseMapVertex(accessRule)
         Assert.assertTrue(accessRuleValues.size > 0)
-        val accessGroup = g.V().hasLabel("accessGroup").has("code", "1")
+        val accessGroup = g.V().hasLabel("accessGroup").has("code", "1").next()
         val accessGroupValues = AbstractMapper.parseMapVertex(accessGroup)
         Assert.assertTrue(accessGroupValues.size > 0)
         val edgeOrganization = g.V().hasLabel("accessRule").has("code", "1").next()
@@ -341,10 +355,10 @@ class ApiControllerAccessRuleTests: ApiControllerHelper(), IVertexTests {
             val response: CreateEdgeSuccess = gson.fromJson(edgeResponse.body, CreateEdgeSuccess::class.java)
             this.assertEdgeCreatedSuccess(source, target, response, "provide")
             val g = GraphFactory.open().traversal()
-            val vSource = g.V().hasLabel("accessRule").has("code", "1")
+            val vSource = g.V().hasLabel("accessRule").has("code", "1").next()
             val vSourceValues = AbstractMapper.parseMapVertex(vSource)
             Assert.assertTrue(vSourceValues.size > 0)
-            val vTarget = g.V().hasLabel(target.label).has("code", target.code)
+            val vTarget = g.V().hasLabel(target.label).has("code", target.code).next()
             val vTargetValues = AbstractMapper.parseMapVertex(vTarget)
             Assert.assertTrue(vTargetValues.size > 0)
             val eSource = g.V().hasLabel("accessRule").has("code", "1").next()

@@ -9,7 +9,8 @@ object GraphFactory {
     fun open(): JanusGraph {
         return this.graph
     }
-    fun setInstance (config: String) {
+    fun setInstance (config: String): GraphFactory {
         this.graph = JanusGraphFactory.open(ClassPathResource(config).file.absolutePath)
+        return this
     }
 }
